@@ -15,11 +15,11 @@ public class Reporter {
     private final int reps;
     private final Consumer<Long> throughputConsumer;
 
-    public Reporter(Reportee reportee, int messageSize, int reps, Consumer<Long> throughputConsumer) {
+    public Reporter(Collector collector, int messageSize, int reps, Consumer<Long> throughputConsumer) {
         this.messageSize = messageSize;
         this.reps = reps;
         this.throughputConsumer = throughputConsumer;
-        this.queues = reportee.getResults().values();
+        this.queues = collector.getResults().values();
     }
 
     public void startReporting() {
@@ -36,7 +36,10 @@ public class Reporter {
                 }
             }
 
-            long throughput = probeNumber*reps*messageSize*1000/summaryTime; /* in B/s */
+            long throughput = 0;
+            if(summaryTime != 0) {
+                throughput = probeNumber * reps * messageSize * 1000 / summaryTime; /* in B/s */
+            }
             throughputConsumer.accept(throughput);
         }
     }

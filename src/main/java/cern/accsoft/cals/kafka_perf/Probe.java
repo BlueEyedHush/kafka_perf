@@ -1,6 +1,6 @@
 package cern.accsoft.cals.kafka_perf;
 
-public interface ResultCollector {
+public interface Probe {
     void beforeSeries();
     void afterSeries();
 }

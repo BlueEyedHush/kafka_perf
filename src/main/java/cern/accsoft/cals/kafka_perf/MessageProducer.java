@@ -5,21 +5,29 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.util.function.Supplier;
 
-public class FloodingProducer implements Runnable {
+public class MessageProducer implements Runnable {
+
+    public static void createAndSpawnOnNewThread(Supplier<ProducerRecord<String, String>> messageSupplier,
+                                                  int reps,
+                                                  int series,
+                                                  Probe probe) {
+        Thread t = new Thread(new MessageProducer(messageSupplier, reps, series, probe));
+        t.start();
+    }
 
     private final Supplier<ProducerRecord<String, String>> messageSupplier;
     private final int reps;
     private final int series;
-    private final ResultCollector resultCollector;
+    private final Probe probe;
 
-    public FloodingProducer(Supplier<ProducerRecord<String, String>> messageSupplier,
-                            int reps,
-                            int series,
-                            ResultCollector resultCollector) {
+    public MessageProducer(Supplier<ProducerRecord<String, String>> messageSupplier,
+                           int reps,
+                           int series,
+                           Probe probe) {
         this.messageSupplier = messageSupplier;
         this.reps = reps;
         this.series = series;
-        this.resultCollector = resultCollector;
+        this.probe = probe;
     }
 
     @Override
@@ -30,9 +38,9 @@ public class FloodingProducer implements Runnable {
 
             /* benchmark */
             for(int i = 0; i < series; i++) {
-                resultCollector.beforeSeries();
+                probe.beforeSeries();
                 runReps(producer, reps);
-                resultCollector.afterSeries();
+                probe.afterSeries();
             }
         }
     }

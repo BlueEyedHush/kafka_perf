@@ -1,7 +1,7 @@
 package cern.accsoft.cals.kafka_perf.collectors;
 
-import cern.accsoft.cals.kafka_perf.Reportee;
-import cern.accsoft.cals.kafka_perf.ResultCollector;
+import cern.accsoft.cals.kafka_perf.Collector;
+import cern.accsoft.cals.kafka_perf.Probe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,10 +12,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class TimingCollector implements Reportee {
+public class TimingCollector implements Collector {
     private static final Logger LOGGER = LoggerFactory.getLogger(TimingCollector.class);
 
-    private class TimingProbe implements ResultCollector {
+    private class TimingProbe implements Probe {
 
         private final int id;
         private long startTimestamp;
@@ -40,6 +40,8 @@ public class TimingCollector implements Reportee {
     /* map cannot be changed after benchmarking is started - keys and values may stay the same (although state
      * of the values might change) */
     private Map<Integer, BlockingQueue<Long>> probeToResultQueue = new HashMap<>();
+
+    public TimingCollector() {}
 
     /* can be called only before the benchmarking is started */
     public TimingProbe getProbe() {

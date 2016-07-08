@@ -1,5 +1,7 @@
 package cern.accsoft.cals.kafka_perf;
 
+import cern.accsoft.cals.kafka_perf.collectors.TimingCollector;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +19,15 @@ public class App {
     }
 
     private void start() {
+        final int reps = 1_000;
 
+        TimingCollector c = new TimingCollector();
+        Reporter r = new Reporter(c, 3, reps, (l) -> System.out.println(l + " B/s"));
+
+        MessageProducer.createAndSpawnOnNewThread(() -> new ProducerRecord<String, String>("test_topic", "MSG"),
+                reps, 10, c.getProbe());
+
+        /* blocking */
+        r.startReporting();
     }
 }
