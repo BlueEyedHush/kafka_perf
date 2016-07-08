@@ -24,7 +24,7 @@ public class App {
         TimingCollector c = new TimingCollector();
         Reporter r = new Reporter(c, 3, reps, (t) -> System.out.println(t + " B/s"));
 
-        MessageProducer.createAndSpawnOnNewThread(() -> new ProducerRecord<String, String>("test_topic", "MSG"),
+        BenchmarkingProducer.createAndSpawnOnNewThread(() -> new ProducerRecord<String, String>("test_topic", "MSG"),
                 reps, 10, c.getProbe());
 
         /* blocking */
