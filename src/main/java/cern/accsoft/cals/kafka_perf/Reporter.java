@@ -13,9 +13,9 @@ public class Reporter {
     private final Collection<BlockingQueue<Long>> queues;
     private final int messageSize;
     private final int reps;
-    private final Consumer<Long> throughputConsumer;
+    private final Consumer<Double> throughputConsumer;
 
-    public Reporter(Collector collector, int messageSize, int reps, Consumer<Long> throughputConsumer) {
+    public Reporter(Collector collector, int messageSize, int reps, Consumer<Double> throughputConsumer) {
         this.messageSize = messageSize;
         this.reps = reps;
         this.throughputConsumer = throughputConsumer;
@@ -23,10 +23,10 @@ public class Reporter {
     }
 
     public void startReporting() {
-        final int probeNumber = queues.size();
+        final int numberOfProbes = queues.size();
 
         while(true) {
-            long summaryTime = 0;
+            double summaryTime = 0;
 
             for(BlockingQueue<Long> q: queues) {
                 try {
@@ -36,9 +36,9 @@ public class Reporter {
                 }
             }
 
-            long throughput = 0;
+            double throughput = 0;
             if(summaryTime != 0) {
-                throughput = probeNumber * reps * messageSize * 1000 / summaryTime; /* in B/s */
+                throughput = ((double) numberOfProbes) * reps * messageSize * 1000 / summaryTime; /* in B/s */
             }
             throughputConsumer.accept(throughput);
         }

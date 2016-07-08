@@ -19,10 +19,10 @@ public class App {
     }
 
     private void start() {
-        final int reps = 1_000;
+        final int reps = 1_000_000;
 
         TimingCollector c = new TimingCollector();
-        Reporter r = new Reporter(c, 3, reps, (l) -> System.out.println(l + " B/s"));
+        Reporter r = new Reporter(c, 3, reps, (t) -> System.out.println(t + " B/s"));
 
         MessageProducer.createAndSpawnOnNewThread(() -> new ProducerRecord<String, String>("test_topic", "MSG"),
                 reps, 10, c.getProbe());
