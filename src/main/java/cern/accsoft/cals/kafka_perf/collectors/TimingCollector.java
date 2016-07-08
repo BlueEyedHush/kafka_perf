@@ -44,7 +44,7 @@ public class TimingCollector implements Collector {
     public TimingCollector() {}
 
     /* can be called only before the benchmarking is started */
-    public TimingProbe getProbe() {
+    public TimingProbe createProbe() {
         int id = nextProbeId++;
         probeToResultQueue.put(id, new LinkedBlockingQueue<>());
         return this.new TimingProbe(id);
