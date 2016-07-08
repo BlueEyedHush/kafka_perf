@@ -4,5 +4,8 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 public interface Reportee {
+    /**
+     * Should always return the same, so that reporter can cache it
+     */
     Map<Integer, BlockingQueue<Long>> getResults();
 }
