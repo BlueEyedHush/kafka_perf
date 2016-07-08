@@ -1,6 +1,7 @@
 package cern.accsoft.cals.kafka_perf;
 
 import cern.accsoft.cals.kafka_perf.collectors.TimingCollector;
+import cern.accsoft.cals.kafka_perf.printers.PrettyThroughputPrinter;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,7 @@ public class App {
         final int reps = 1_000_000;
 
         TimingCollector c = new TimingCollector();
-        Reporter r = new Reporter(c, 3, reps, (t) -> System.out.println(t + " B/s"));
+        Reporter r = new Reporter(c, 3, reps, new PrettyThroughputPrinter());
 
         BenchmarkingProducer.createAndSpawnOnNewThread(() -> new ProducerRecord<String, String>("test_topic", "MSG"),
                 reps, 10, c.getProbe());
