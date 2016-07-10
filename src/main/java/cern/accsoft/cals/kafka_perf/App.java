@@ -59,9 +59,6 @@ public class App {
                 new RawThroughtputPrinter() : new PrettyThroughputPrinter();
         final int topics = config.getInt(TOPICS_OPT);
 
-        /* Kafka's default serialzier uses UTF8, so it should give 0.5kB */
-        final String msgBody = Utils.generateWithLength(512);
-
         TimingCollector c = new TimingCollector();
         Reporter r = new Reporter(c, 3, reps, printer);
 
