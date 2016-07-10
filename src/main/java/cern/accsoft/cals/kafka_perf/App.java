@@ -1,10 +1,11 @@
 package cern.accsoft.cals.kafka_perf;
 
 import cern.accsoft.cals.kafka_perf.collectors.TimingCollector;
+import cern.accsoft.cals.kafka_perf.message_suppliers.MultipleTopicFixedLenghtSupplier;
+import cern.accsoft.cals.kafka_perf.message_suppliers.SingleTopicFixedLengthSupplier;
 import cern.accsoft.cals.kafka_perf.printers.PrettyThroughputPrinter;
 import cern.accsoft.cals.kafka_perf.printers.RawThroughtputPrinter;
 import com.martiansoftware.jsap.*;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,7 @@ public class App {
     private static final String SERIES_OPT = "series";
     private static final String THREADS_OPT = "threads";
     private static final String RAW_REPORTER_OPT = "raw_rep";
+    private static final String TOPICS_OPT = "topics";
 
     public static void main(String[] args) throws Exception {
         LOGGER.info("Application started");
@@ -37,7 +39,9 @@ public class App {
                         new FlaggedOption(THREADS_OPT, JSAP.INTEGER_PARSER, "1", JSAP.NOT_REQUIRED, 't', JSAP.NO_LONGFLAG,
                                 "Number of threads sending messages"),
                         new Switch(RAW_REPORTER_OPT, 'R', JSAP.NO_LONGFLAG,
-                                "Should raw throughput printer be used instead of pretty")
+                                "Should raw throughput printer be used instead of pretty"),
+                        new FlaggedOption(TOPICS_OPT, JSAP.INTEGER_PARSER, "1", JSAP.NOT_REQUIRED, 'T', JSAP.NO_LONGFLAG,
+                                "Number of topics to which messages will be sent")
                 }
         );
 
@@ -53,6 +57,7 @@ public class App {
         final int threads = config.getInt(THREADS_OPT);
         final Consumer<Double> printer = config.getBoolean(RAW_REPORTER_OPT) ?
                 new RawThroughtputPrinter() : new PrettyThroughputPrinter();
+        final int topics = config.getInt(TOPICS_OPT);
 
         /* Kafka's default serialzier uses UTF8, so it should give 0.5kB */
         final String msgBody = Utils.generateWithLength(512);
@@ -61,7 +66,8 @@ public class App {
         Reporter r = new Reporter(c, 3, reps, printer);
 
         for (int i = 0; i < threads; i++) {
-            BenchmarkingProducer.createAndSpawnOnNewThread(() -> new ProducerRecord<String, String>("test_topic", msgBody),
+            BenchmarkingProducer.createAndSpawnOnNewThread(new MultipleTopicFixedLenghtSupplier(512, topics),
+                    topics,
                     reps,
                     series,
                     c.createProbe());
