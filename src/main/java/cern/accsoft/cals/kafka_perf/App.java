@@ -2,13 +2,15 @@ package cern.accsoft.cals.kafka_perf;
 
 import cern.accsoft.cals.kafka_perf.collectors.TimingCollector;
 import cern.accsoft.cals.kafka_perf.message_suppliers.MultipleTopicFixedLenghtSupplier;
-import cern.accsoft.cals.kafka_perf.message_suppliers.SingleTopicFixedLengthSupplier;
 import cern.accsoft.cals.kafka_perf.printers.PrettyThroughputPrinter;
 import cern.accsoft.cals.kafka_perf.printers.RawThroughtputPrinter;
+import cern.accsoft.cals.kafka_perf.reporters.LiveReporter;
+import cern.accsoft.cals.kafka_perf.reporters.PostReporter;
 import com.martiansoftware.jsap.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
 /**
@@ -60,18 +62,28 @@ public class App {
         final int topics = config.getInt(TOPICS_OPT);
 
         TimingCollector c = new TimingCollector();
-        Reporter r = new Reporter(c, 3, reps, printer);
+        PostReporter r = new PostReporter(c, 3, reps, printer);
+
+        CountDownLatch probesFinished = new CountDownLatch(threads);
 
         for (int i = 0; i < threads; i++) {
             BenchmarkingProducer.createAndSpawnOnNewThread(new MultipleTopicFixedLenghtSupplier(512, topics),
                     topics,
                     reps,
                     series,
-                    c.createProbe());
+                    c.createProbe(),
+                    probesFinished::countDown);
         }
 
-        /* blocking */
-        r.startReporting();
+        /* wait for all probes to finish */
+        try {
+            probesFinished.await();
+        } catch (InterruptedException e) {
+            LOGGER.error("Unexpected InterruptedException", e);
+        }
+
+        /* print report */
+        r.report();
     }
 
 }

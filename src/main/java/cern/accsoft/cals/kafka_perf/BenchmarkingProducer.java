@@ -10,8 +10,9 @@ public class BenchmarkingProducer implements Runnable {
                                                  int warmup_reps,
                                                  int reps,
                                                  int series,
-                                                 Probe probe) {
-        Thread t = new Thread(new BenchmarkingProducer(messageSupplier, warmup_reps, reps, series, probe));
+                                                 Probe probe,
+                                                 Runnable onFinish) {
+        Thread t = new Thread(new BenchmarkingProducer(messageSupplier, warmup_reps, reps, series, probe, onFinish));
         t.start();
     }
 
@@ -20,17 +21,20 @@ public class BenchmarkingProducer implements Runnable {
     private final int reps;
     private final int series;
     private final Probe probe;
+    private final Runnable onFinish;
 
     public BenchmarkingProducer(Supplier<ProducerRecord<String, String>> messageSupplier,
                                 int warmup_reps,
                                 int reps,
                                 int series,
-                                Probe probe) {
+                                Probe probe,
+                                Runnable onFinish) {
         this.messageSupplier = messageSupplier;
         this.warmup_reps = warmup_reps;
         this.reps = reps;
         this.series = series;
         this.probe = probe;
+        this.onFinish = onFinish;
     }
 
     @Override
@@ -46,6 +50,8 @@ public class BenchmarkingProducer implements Runnable {
                 probe.afterSeries();
             }
         }
+
+        onFinish.run();
     }
 
     private void runReps(KafkaProducer<String, String> producer, int reps) {
