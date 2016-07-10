@@ -71,6 +71,6 @@ public class PostReporter {
             variance += (mean-l)*(mean-l);
         }
 
-        return variance;
+        return variance/(q.size()-1);
     }
 }
