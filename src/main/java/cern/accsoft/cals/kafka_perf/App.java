@@ -54,11 +54,14 @@ public class App {
         final Consumer<Double> printer = config.getBoolean(RAW_REPORTER_OPT) ?
                 new RawThroughtputPrinter() : new PrettyThroughputPrinter();
 
+        /* Kafka's default serialzier uses UTF8, so it should give 0.5kB */
+        final String msgBody = Utils.generateWithLength(512);
+
         TimingCollector c = new TimingCollector();
         Reporter r = new Reporter(c, 3, reps, printer);
 
         for (int i = 0; i < threads; i++) {
-            BenchmarkingProducer.createAndSpawnOnNewThread(() -> new ProducerRecord<String, String>("test_topic", "MSG"),
+            BenchmarkingProducer.createAndSpawnOnNewThread(() -> new ProducerRecord<String, String>("test_topic", msgBody),
                     reps,
                     series,
                     c.createProbe());
