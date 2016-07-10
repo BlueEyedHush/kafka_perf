@@ -5,12 +5,7 @@ import cern.accsoft.cals.kafka_perf.Probe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
 
 public class TimingCollector implements Collector {
     private static final Logger LOGGER = LoggerFactory.getLogger(TimingCollector.class);
@@ -39,27 +34,23 @@ public class TimingCollector implements Collector {
     private int nextProbeId = 0;
     /* map cannot be changed after benchmarking is started - keys and values may stay the same (although state
      * of the values might change) */
-    private Map<Integer, BlockingQueue<Long>> probeToResultQueue = new HashMap<>();
+    private Map<Integer, List<Long>> probeToResultQueue = new HashMap<>();
 
     public TimingCollector() {}
 
     /* can be called only before the benchmarking is started */
     public TimingProbe createProbe() {
         int id = nextProbeId++;
-        probeToResultQueue.put(id, new LinkedBlockingQueue<>());
+        probeToResultQueue.put(id, new LinkedList<>());
         return this.new TimingProbe(id);
     }
 
     @Override
-    public Map<Integer, BlockingQueue<Long>> getResults() {
+    public Map<Integer, List<Long>> getResults() {
         return Collections.unmodifiableMap(probeToResultQueue);
     }
 
     private void reportResult(int probeId, long diff) {
-        try {
-            probeToResultQueue.get(probeId).offer(diff, 10, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            LOGGER.error("unexpected InterruptedException", e);
-        }
+        probeToResultQueue.get(probeId).add(diff);
     }
 }

@@ -5,8 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.concurrent.BlockingQueue;
-import java.util.function.Consumer;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This reporter is run after all of the probes finish
@@ -14,41 +14,63 @@ import java.util.function.Consumer;
 public class PostReporter {
     private static final Logger LOGGER = LoggerFactory.getLogger(PostReporter.class);
 
-    private final Collection<BlockingQueue<Long>> queues;
+    private final Collection<List<Long>> lists;
     private final int messageSize;
     private final int reps;
-    private final Consumer<Double> throughputConsumer;
 
-    public PostReporter(Collector collector, int messageSize, int reps, Consumer<Double> throughputConsumer) {
+    public PostReporter(Collector collector, int messageSize, int reps) {
         this.messageSize = messageSize;
         this.reps = reps;
-        this.throughputConsumer = throughputConsumer;
-        this.queues = collector.getResults().values();
+        this.lists = collector.getResults().values();
     }
 
     public void report() {
-        final int numberOfProbes = queues.size();
+        double totalMean = 0.0;
+        /* variance is calculated assuming, that threads doesn't influence one another, which is obviously false,
+         * so results might not be representative, but trends should be (since all manipulation is done server-,
+          * not client-side */
+        double totalVariance = 0.0;
 
-        if(numberOfProbes < 1) {
-            throw new IllegalStateException("At least one probe must be used");
+        for(List<Long> q: lists) {
+            List<Double> throughputList = q.stream()
+                    .map((time) -> calculateThroughput(time, reps, messageSize))
+                    .collect(Collectors.toList());
+            double mean = getMeanValue(throughputList);
+            double variance = getVariance(mean, throughputList);
+
+            totalMean += mean;
+            totalVariance += variance;
         }
 
-        for(int i = 0; i < queues.iterator().next().size(); i++) {
-            double summaryTime = 0;
+        double stddev = Math.sqrt(totalVariance);
 
-            for(BlockingQueue<Long> q: queues) {
-                try {
-                    summaryTime += q.take();
-                } catch (InterruptedException e) {
-                    LOGGER.error("Unexpected InterruptedException", e);
-                }
-            }
+        System.out.printf("%f %f", totalMean, stddev);
+    }
 
-            double throughput = 0;
-            if(summaryTime != 0) {
-                throughput = ((double) numberOfProbes) * reps * messageSize * 1000 / summaryTime; /* in B/s */
-            }
-            throughputConsumer.accept(throughput);
+    /**
+     * @return throughput in B/s
+     */
+    private static Double calculateThroughput(long time, int reps, int messageSize) {
+        return ((double) reps) * messageSize * 1000 / time;
+    }
+
+    private static double getMeanValue(List<Double> q) {
+        double sum = 0.0;
+
+        for(Double l: q) {
+            sum += l;
         }
+
+        return sum/q.size();
+    }
+
+    private static double getVariance(double mean, List<Double> q) {
+        double variance = 0.0;
+
+        for(Double l: q) {
+            variance += (mean-l)*(mean-l);
+        }
+
+        return variance;
     }
 }

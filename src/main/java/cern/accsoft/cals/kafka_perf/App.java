@@ -2,16 +2,12 @@ package cern.accsoft.cals.kafka_perf;
 
 import cern.accsoft.cals.kafka_perf.collectors.TimingCollector;
 import cern.accsoft.cals.kafka_perf.message_suppliers.MultipleTopicFixedLenghtSupplier;
-import cern.accsoft.cals.kafka_perf.printers.PrettyThroughputPrinter;
-import cern.accsoft.cals.kafka_perf.printers.RawThroughtputPrinter;
-import cern.accsoft.cals.kafka_perf.reporters.LiveReporter;
 import cern.accsoft.cals.kafka_perf.reporters.PostReporter;
 import com.martiansoftware.jsap.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.function.Consumer;
 
 /**
  * Hello world!
@@ -40,8 +36,6 @@ public class App {
                                 "Number of repetitions in each series"),
                         new FlaggedOption(THREADS_OPT, JSAP.INTEGER_PARSER, "1", JSAP.NOT_REQUIRED, 't', JSAP.NO_LONGFLAG,
                                 "Number of threads sending messages"),
-                        new Switch(RAW_REPORTER_OPT, 'R', JSAP.NO_LONGFLAG,
-                                "Should raw throughput printer be used instead of pretty"),
                         new FlaggedOption(TOPICS_OPT, JSAP.INTEGER_PARSER, "1", JSAP.NOT_REQUIRED, 'T', JSAP.NO_LONGFLAG,
                                 "Number of topics to which messages will be sent")
                 }
@@ -57,12 +51,10 @@ public class App {
         final int series = config.getInt(SERIES_OPT);
         final int reps = config.getInt(REPS_OPT);
         final int threads = config.getInt(THREADS_OPT);
-        final Consumer<Double> printer = config.getBoolean(RAW_REPORTER_OPT) ?
-                new RawThroughtputPrinter() : new PrettyThroughputPrinter();
         final int topics = config.getInt(TOPICS_OPT);
 
         TimingCollector c = new TimingCollector();
-        PostReporter r = new PostReporter(c, 3, reps, printer);
+        PostReporter r = new PostReporter(c, 3, reps);
 
         CountDownLatch probesFinished = new CountDownLatch(threads);
 
