@@ -13,12 +13,13 @@ import java.util.concurrent.CountDownLatch;
  * Hello world!
  */
 public class App {
+    public static final int MESSAGE_LEN = 512;
+
     private static final Logger LOGGER = LoggerFactory.getLogger("main");
 
     private static final String REPS_OPT = "reps";
     private static final String SERIES_OPT = "series";
     private static final String THREADS_OPT = "threads";
-    private static final String RAW_REPORTER_OPT = "raw_rep";
     private static final String TOPICS_OPT = "topics";
 
     public static void main(String[] args) throws Exception {
@@ -54,12 +55,12 @@ public class App {
         final int topics = config.getInt(TOPICS_OPT);
 
         TimingCollector c = new TimingCollector();
-        PostReporter r = new PostReporter(c, 3, reps);
+        PostReporter r = new PostReporter(c, MESSAGE_LEN, reps);
 
         CountDownLatch probesFinished = new CountDownLatch(threads);
 
         for (int i = 0; i < threads; i++) {
-            BenchmarkingProducer.createAndSpawnOnNewThread(new MultipleTopicFixedLenghtSupplier(512, topics),
+            BenchmarkingProducer.createAndSpawnOnNewThread(new MultipleTopicFixedLenghtSupplier(MESSAGE_LEN, topics),
                     topics,
                     reps,
                     series,
