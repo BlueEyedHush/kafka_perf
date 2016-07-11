@@ -39,5 +39,5 @@ $ZK_DIR/bin/zkServer.sh start
 
 # start Kafka
 if [ ! -f zkonly ]; then
-    $KAFKA_DIR/bin/kafka-server-start.sh $KAFKA_DIR/../conf/server.properties
+    $KAFKA_DIR/bin/kafka-server-start.sh $KAFKA_DIR/config/server.properties
 fi
