@@ -9,6 +9,9 @@ KAFKA_DATA=/mnt/vol1/kf
 ZK_DIR=/opt/kafka_perf/zookeeper/latest
 ZK_DATA=/mnt/vol1/zk
 
+export ZOO_LOG_DIR=/var/log/zookeeper
+mkdir -p $ZOO_LOG_DIR
+
 # shutdown zookeeper
 $ZK_DIR/bin/zkServer.sh stop
 sleep 5
