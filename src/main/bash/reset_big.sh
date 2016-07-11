@@ -9,14 +9,15 @@ KAFKA_DATA=/mnt/vol1/kf
 ZK_DIR=/opt/kafka_perf/zookeeper/latest
 ZK_DATA=/mnt/vol1/zk
 
+# shutdown zookeeper
+$ZK_DIR/bin/zkServer.sh stop
+sleep 5
+
 # shutdown kafka
 if [ ! -f zkonly ]; then
     #$KAFKA_DIR/bin/kafka-server-stop.sh
     for pid in `ps aux | grep java | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done
 fi
-
-# shutdown zookeeper
-$ZK_DIR/bin/zkServer.sh stop
 
 # remove Kafka's data dir
 if [ ! -f zkonly ]; then
