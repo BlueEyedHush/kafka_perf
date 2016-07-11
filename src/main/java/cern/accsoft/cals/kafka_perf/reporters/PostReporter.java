@@ -32,19 +32,13 @@ public class PostReporter {
         double totalVariance = 0.0;
 
         for(List<Long> q: lists) {
-            List<Double> throughputList = q.stream()
+            String throughtputs = q.stream()
                     .map((time) -> calculateThroughput(time, reps, messageSize))
-                    .collect(Collectors.toList());
-            double mean = getMeanValue(throughputList);
-            double variance = getVariance(mean, throughputList);
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(","));
 
-            totalMean += mean;
-            totalVariance += variance;
+            System.out.println(throughtputs);
         }
-
-        double stddev = Math.sqrt(totalVariance);
-
-        System.out.printf("%f %f", totalMean, stddev);
     }
 
     /**
@@ -52,25 +46,5 @@ public class PostReporter {
      */
     private static Double calculateThroughput(long time, int reps, int messageSize) {
         return ((double) reps) * messageSize * 1000 / time;
-    }
-
-    private static double getMeanValue(List<Double> q) {
-        double sum = 0.0;
-
-        for(Double l: q) {
-            sum += l;
-        }
-
-        return sum/q.size();
-    }
-
-    private static double getVariance(double mean, List<Double> q) {
-        double variance = 0.0;
-
-        for(Double l: q) {
-            variance += (mean-l)*(mean-l);
-        }
-
-        return variance/(q.size()-1);
     }
 }
