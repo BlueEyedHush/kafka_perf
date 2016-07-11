@@ -11,7 +11,8 @@ ZK_DATA=/mnt/vol1/zk
 
 # shutdown kafka
 if [ ! -f zkonly ]; then
-    $KAFKA_DIR/bin/kafka-server-stop.sh
+    #$KAFKA_DIR/bin/kafka-server-stop.sh
+    for pid in `ps aux | grep java | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done
 fi
 
 # shutdown zookeeper
