@@ -6,31 +6,29 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import java.util.function.Supplier;
 
 public class BenchmarkingProducer implements Runnable {
+    private static final int WARMUP_REPS = 100;
+
     public static void createAndSpawnOnNewThread(Supplier<ProducerRecord<String, String>> messageSupplier,
-                                                 int warmup_reps,
                                                  int reps,
                                                  int series,
                                                  Probe probe,
                                                  Runnable onFinish) {
-        Thread t = new Thread(new BenchmarkingProducer(messageSupplier, warmup_reps, reps, series, probe, onFinish));
+        Thread t = new Thread(new BenchmarkingProducer(messageSupplier, reps, series, probe, onFinish));
         t.start();
     }
 
     private final Supplier<ProducerRecord<String, String>> messageSupplier;
-    private final int warmup_reps;
     private final int reps;
     private final int series;
     private final Probe probe;
     private final Runnable onFinish;
 
     public BenchmarkingProducer(Supplier<ProducerRecord<String, String>> messageSupplier,
-                                int warmup_reps,
                                 int reps,
                                 int series,
                                 Probe probe,
                                 Runnable onFinish) {
         this.messageSupplier = messageSupplier;
-        this.warmup_reps = warmup_reps;
         this.reps = reps;
         this.series = series;
         this.probe = probe;
@@ -41,7 +39,7 @@ public class BenchmarkingProducer implements Runnable {
     public void run() {
         try (KafkaProducer<String, String> producer = new KafkaProducer<>(Configuration.KAFKA_CONFIGURATION)) {
             /* warmup */
-            runReps(producer, warmup_reps);
+            runReps(producer, WARMUP_REPS);
 
             /* benchmark */
             for (int i = 0; i < series; i++) {
