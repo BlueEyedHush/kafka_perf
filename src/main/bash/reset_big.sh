@@ -4,7 +4,8 @@
 # also if we are on an instance which hosts only Zookeeper, without Kafka, zkonly file should be present
 source ./id.sh
 
-ZKDELALL=../python/zkDelAll.py
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ZKDELALL="$DIR/../python/zkDelAll.py"
 KAFKA_DIR=/opt/kafka_perf/kafka/latest
 KAFKA_DATA=/mnt/vol1/kf
 
