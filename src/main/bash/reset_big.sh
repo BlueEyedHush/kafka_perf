@@ -8,7 +8,7 @@ ZKDELALL="$DIR/../python/zkDelAll.py"
 KAFKA_DIR=/opt/kafka_perf/kafka/latest
 KAFKA_DATA=/mnt/vol1/kf
 
-if [ $1 -eq "stop" ]; then
+if [ "$1" == "stop" ]; then
     # shutdown kafka
     if [ ! -f zkonly ]; then
         #$KAFKA_DIR/bin/kafka-server-stop.sh
@@ -31,7 +31,7 @@ if [ $1 -eq "stop" ]; then
     fi
 fi
 
-if [ $1 -eq "start" ]; then
+if [ "$1" == "start" ]; then
     # start Kafka
     if [ ! -f zkonly ]; then
         $KAFKA_DIR/bin/kafka-server-start.sh -daemon $KAFKA_DIR/config/server.properties

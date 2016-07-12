@@ -8,8 +8,9 @@ zk = KazooClient(hosts=host)
 zk.start()
 
 for child in zk.get_children(root):
-    child_path = root + child
-    print('Deleting ' + child_path)
-    zk.delete(path=child_path, recursive=True)
+    if(child != "zookeeper"):
+        child_path = root + child
+        print('Deleting ' + child_path)
+        zk.delete(path=child_path, recursive=True)
 
 zk.stop()
