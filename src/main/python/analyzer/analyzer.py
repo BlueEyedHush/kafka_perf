@@ -2,6 +2,7 @@
 import csv
 import sys
 import numpy as np
+import argparse
 
 def load_and_parse_data():
     converted_and_concatenated_lists = []
@@ -23,9 +24,19 @@ def combine_percentiles(perc):
     return np.sum(perc)/len(perc)
 
 def main():
+    #args = parse_args()
+
     input_data = load_and_parse_data()
     percentiels = calculate_percentiles(input_data)
+
+    #if(args.per_instance):
+    #    print
     print combine_percentiles(percentiels)
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Analyses data collected by Kafka benchmark')
+    parser.add_argument('--per-instance', dest='per_instance', type=int, help='shows percentile for each instance')
+    return parser.parse_args()
 
 if __name__ == "__main__":
     main()
