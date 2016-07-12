@@ -4,22 +4,19 @@
 # also if we are on an instance which hosts only Zookeeper, without Kafka, zkonly file should be present
 source ./id.sh
 
+ZKDELALL=../python/zkDelAll.py
 KAFKA_DIR=/opt/kafka_perf/kafka/latest
 KAFKA_DATA=/mnt/vol1/kf
-ZK_DIR=/opt/kafka_perf/zookeeper/latest
-ZK_DATA=/mnt/vol1/zk
-
-export ZOO_LOG_DIR=/var/log/zookeeper
-mkdir -p $ZOO_LOG_DIR
-
-# shutdown zookeeper
-$ZK_DIR/bin/zkServer.sh stop
-sleep 5
 
 # shutdown kafka
 if [ ! -f zkonly ]; then
     #$KAFKA_DIR/bin/kafka-server-stop.sh
-    for pid in `ps aux | grep java | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done
+    for pid in `ps aux | grep [k]afka.logs.dir | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done
+fi
+
+# remove all data from zookeeper
+if [ ! -f zkonly ]; then
+    python $ZKDELALL /
 fi
 
 # remove Kafka's data dir
@@ -27,20 +24,13 @@ if [ ! -f zkonly ]; then
     rm -rf $KAFKA_DATA
 fi
 
-# remove Zookeeper's data
-rm -rf $ZK_DATA
-
 # create folders for new data
 if [ ! -f zkonly ]; then
     mkdir -p $KAFKA_DATA
 fi
-mkdir -p $ZK_DATA
 
-# create Zk's myid
-echo $MYID > $ZK_DATA/myid
-
-# start Zookeeper
-$ZK_DIR/bin/zkServer.sh start
+# give ZK a little bit more time to replicate
+sleep 3
 
 # start Kafka
 if [ ! -f zkonly ]; then
