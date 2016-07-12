@@ -16,6 +16,7 @@ public class Configuration {
         /*m.put("bootstrap.servers", "localhost:9092");*/
         m.put("key.serializer", StringSerializer.class);
         m.put("value.serializer", StringSerializer.class);
+        m.put("partitioner.class", FairPartitioner.class);
 
         KAFKA_CONFIGURATION = Collections.unmodifiableMap(m);
     }
