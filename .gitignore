@@ -3,5 +3,4 @@ target/
 *.iml
 tmp/
 keyfile.sh
-id.sh
 zkonly
