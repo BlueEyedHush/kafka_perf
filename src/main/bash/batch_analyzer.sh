@@ -11,7 +11,8 @@ TARGET_FILE=$PREFIX/results
 echo -e "\n" >> $TARGET_FILE
 
 for fname in $*; do
-    PERCENTILE=`python $ANALYZER $PREFIX/{0..2}/$fname`
+    FILES=$PREFIX/0/$fname*" "$PREFIX/1/$fname*" "$PREFIX/2/$fname*
+    PERCENTILE=`python $ANALYZER $FILES`
     TCOUNT=${fname:1}
     echo "$TCOUNT $PERCENTILE" >> "$TARGET_FILE"
 done
