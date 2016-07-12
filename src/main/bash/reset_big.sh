@@ -4,14 +4,13 @@
 # if we are on an instance which hosts only Zookeeper, without Kafka, zkonly file should be present
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/env.sh
+
 ZKDELALL="$DIR/../python/zkDelAll.py"
-KAFKA_DIR=/opt/kafka_perf/kafka/latest
-KAFKA_DATA=/mnt/vol1/kf
 
 if [ "$1" == "stop" ]; then
     # shutdown kafka
     if [ ! -f zkonly ]; then
-        #$KAFKA_DIR/bin/kafka-server-stop.sh
         for pid in `ps aux | grep [k]afka.logs.dir | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done
     fi
 
