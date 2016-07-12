@@ -16,7 +16,7 @@ if [ ! -f zkonly ]; then
 fi
 
 # remove all data from zookeeper
-if [ ! -f zkonly ]; then
+if [ -f zkonly ]; then
     python $ZKDELALL /
 fi
 
