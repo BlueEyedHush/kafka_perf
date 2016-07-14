@@ -4,3 +4,5 @@ target/
 tmp/
 keyfile.sh
 zkonly
+logs/
+*.pyc
