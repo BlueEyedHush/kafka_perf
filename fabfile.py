@@ -5,14 +5,22 @@
 # todo: redirect command outputs to coordinator
 # todo: neither kafka's not zk's logs are downloaded
 
+import ast
+import datetime
+import os
 import random
 import string
-import datetime
-import ast
 from fabric.api import *
 
 env.shell = "/bin/bash -c"
 env.always_use_pty = False
+
+zk_jmx_port=9091
+kafka_jmx_port=9092
+
+class RemoteException(Exception):
+    pass
+env.abort_exception = RemoteException
 
 base_app_dir = '/opt/kafka_perf'
 base_data_dir = '/mnt/vol1'
@@ -30,8 +38,9 @@ test_worker_jar = '{}/target/kafka_perf_test-0.1-jar-with-dependencies.jar'.form
 remote_log_directory = '/var/log/kafka_perf'
 coordinator_log_path = './coordinator.out' # this file is stored remotelly, and then copied somewhere under local log dir
 local_log_directory = './logs'
+emergency_local_log_directory = '{}/emergency'.format(local_log_directory)
 
-zookeeper_log_file = '{}/zookeeper.out'.format(remote_log_directory)
+zookeeper_log_file = '/var/log/zookeeper/zookeeper.out'
 kafka_log_file = '{}/logs/kafkaServer.out'.format(kafka_dir)
 results_file_path = '/tmp/results'
 
@@ -41,6 +50,18 @@ def coord_log(msg):
 
 def get_random_string(length):
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
+
+def download_file(host, from_path, to_path):
+    os.system('scp {}:{} {} || true'.format(host, from_path, to_path))
+
+def emergency_log_copy():
+    for host in h('zk'):
+        host_log_dir = '{}/{}'.format(emergency_local_log_directory, host)
+        os.system('mkdir -p {}'.format(host_log_dir))
+        download_file(host, zookeeper_log_file, host_log_dir)
+        download_file(host, coordinator_log_path, host_log_dir)
+        download_file(host, kafka_log_file, host_log_dir)
+
 
 env.roledefs = {
     'all': ['128.142.128.88','128.142.134.233','188.184.165.208','128.142.242.119','128.142.134.55'],
@@ -58,6 +79,7 @@ def h(name):
 @parallel
 @roles('all')
 def init():
+    run('echo LOG_START > {}'.format(coordinator_log_path))
     coord_log('creating local ({}) and remote ({}) log directories'.format(local_log_directory, remote_log_directory))
     run('rm -rf {}'.format(remote_log_directory))
     run('mkdir -p {0}'.format(remote_log_directory))
@@ -79,9 +101,10 @@ def stop_kafka():
 @parallel
 @roles('zk')
 def ensure_zk_running():
-    zk_server_script_path = '{}/bin/zkServer.sh'.format(base_app_dir)
-    coord_log('ensuring that zk is running')
-    run('export ZOO_LOG_DIR={0} && {1} start', remote_log_directory, zk_server_script_path)
+    zk_server_script_path = '{}/bin/zkServer.sh'.format(zookeeper_dir)
+    coord_log('ensuring that zk is running & truncating log')
+    run('echo ----trunc---- > {}'.format(zookeeper_log_file))
+    run('export ZOO_LOG_DIR={0} && export JMXPORT={1} && {2} start'.format(remote_log_directory, zk_jmx_port, zk_server_script_path))
     coord_log('zk should be running')
 
 @task
@@ -107,7 +130,6 @@ def cleanup_after_kafka():
 def remove_kafka_log():
     run('rm -f {}'.format(kafka_log_file))
 
-
 @task
 @parallel
 @roles('prod')
@@ -121,7 +143,7 @@ def ensure_kafka_running():
     kafka_start_script_path = '{0}/bin/kafka-server-start.sh'.format(kafka_dir)
     kafka_config_path = '{0}/config/server.properties'.format(kafka_dir)
     coord_log('ensuring kafka is running')
-    run('{0} -daemon {1}'.format(kafka_start_script_path, kafka_config_path))
+    run('export JMX_PORT={0} && {1} -daemon {2}'.format(kafka_jmx_port, kafka_start_script_path, kafka_config_path))
     coord_log('kafka should be running')
 
 @task
@@ -138,9 +160,6 @@ def run_test(series, reps, threads, topics):
     coord_log('executing actual test')
     run('java -jar {0} -s {1} -r {2} -t {3} -T {4} > {5}'.format(test_worker_jar, series, reps, threads, topics, results_file_path))
     coord_log('test execution finished')
-
-def download_file(host, from_path, to_path):
-    local('scp {}:{} {} || true'.format(host, from_path, to_path))
 
 @task
 @parallel
@@ -180,23 +199,27 @@ def run_test_set(suite_name, set_name, series, reps, threads, topics):
 @task
 @runs_once
 def run_test_suite(topics='[1]', series=1, reps=10, threads=2):
-    execute(init)
-
     suite_name = datetime.datetime.now().strftime('%H%M_%d%m%y')
     suite_log_dir = "{}/{}".format(local_log_directory, suite_name)
     local('mkdir -p {}'.format(suite_log_dir))
 
-    topic_progression = ast.literal_eval(topics)
-    for i in range(0, len(topic_progression)):
-        for j in range(0, int(series)):
-            set_name = 't{}_{}'.format(str(topic_progression[i]), str(j))
-            execute(run_test_set, suite_name, set_name, 1, reps, threads, topic_progression[i])
+    try:
+        execute(init)
+        execute(ensure_zk_running)
 
-    for host in h('zk'):
-        local_dir = '{}/{}/persuite/{}'.format(local_log_directory, suite_name, host)
-        local('mkdir -p {}'.format(local_dir))
-        download_file(host, zookeeper_log_file, local_dir)
-        download_file(host, coordinator_log_path, local_dir)
+        topic_progression = ast.literal_eval(topics)
+        for i in range(0, len(topic_progression)):
+            for j in range(0, int(series)):
+                set_name = 't{}_{}'.format(str(topic_progression[i]), str(j))
+                execute(run_test_set, suite_name, set_name, 1, reps, threads, topic_progression[i])
+
+        for host in h('zk'):
+            local_dir = '{}/{}/persuite/{}'.format(local_log_directory, suite_name, host)
+            local('mkdir -p {}'.format(local_dir))
+            download_file(host, zookeeper_log_file, local_dir)
+            download_file(host, coordinator_log_path, local_dir)
+    finally:
+        emergency_log_copy()
 
 
 
