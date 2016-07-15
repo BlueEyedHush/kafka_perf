@@ -39,7 +39,7 @@ def get_cli_arguments():
                         help='duration of the test (in seconds)')
     parser.add_argument('-s', dest='message_size', action='store', default=500, required=False, type=int,
                         help='size of messages sent to the broker (in bytes)')
-    parser.add_argument('-T', dest='topics', action='store', default=1, required=False, type=int,
+    parser.add_argument('-t', dest='topics', action='store', default=1, required=False, type=int,
                         help='number of topics to which messages will be sent')
 
     return parser.parse_args()
@@ -61,4 +61,5 @@ def register_emergency_signal_handler(zk):
 
 if __name__ == "__main__":
     args = get_cli_arguments()
-    main(args)
+    print 'orchestrator!'
+    #main(args)

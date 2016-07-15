@@ -12,6 +12,7 @@ from fabric.api import *
 
 env.shell = "/bin/bash -c"
 env.always_use_pty = False
+env.use_ssh_config = True
 
 zk_jmx_port=9091
 kafka_jmx_port=9093
@@ -19,6 +20,9 @@ kafka_jmx_port=9093
 class RemoteException(Exception):
     pass
 env.abort_exception = RemoteException
+
+local_python_dir='./src/main/python'
+orchestrator_script_path='{}/orchestrator.py'.format(local_python_dir)
 
 base_app_dir = '/opt/kafka_perf'
 base_data_dir = '/mnt/vol1'
@@ -73,15 +77,18 @@ env.roledefs = {
 def h(name):
     return env.roledefs[name]
 
+def run_with_logging(command):
+    run('{} 2>&1 | tee -a {}'.format(command, coordinator_log_path))
+
 @task
 @parallel
 @roles('all')
 def init():
     run('echo LOG_START > {}'.format(coordinator_log_path))
     coord_log('creating local ({}) and remote ({}) log directories'.format(local_log_directory, remote_log_directory))
-    run('rm -rf {}'.format(remote_log_directory))
-    run('mkdir -p {0}'.format(remote_log_directory))
-    # run('TMP_DIR=`mktemp -d` && '
+    run_with_logging('rm -rf {}'.format(remote_log_directory))
+    run_with_logging('mkdir -p {0}'.format(remote_log_directory))
+    # run_with_logging('TMP_DIR=`mktemp -d` && '
     #     'mv {0}/* ${{TMP_DIR}} && '
     #     'echo "previous contents of log dir moved to ${{TMP_DIR}}"'.format(remote_log_directory))
     local('mkdir -p {}'.format(local_log_directory))
@@ -92,7 +99,7 @@ def init():
 @parallel
 def stop_kafka():
     coord_log('stopping kafka')
-    run('''for pid in `ps aux | grep [k]afka.logs.dir | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done''')
+    run_with_logging('''for pid in `ps aux | grep [k]afka.logs.dir | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done''')
     coord_log('kafka_stopped')
 
 @task
@@ -102,15 +109,16 @@ def ensure_zk_running():
     zk_server_script_path = '{}/bin/zkServer.sh'.format(zookeeper_dir)
     coord_log('ensuring that zk is running & truncating log')
     run('echo ----trunc---- > {}'.format(zookeeper_log_file))
-    run('export ZOO_LOG_DIR={0} && export JMXPORT={1} && {2} start'.format(remote_log_directory, zk_jmx_port, zk_server_script_path))
+    run_with_logging('export ZOO_LOG_DIR={0} && export JMXPORT={1} && {2} start'
+                     .format(remote_log_directory, zk_jmx_port, zk_server_script_path))
     coord_log('zk should be running')
 
 @task
 @roles('zk_operator')
 def purge_zookeeper():
     purge_script_path = '{0}/zkDelAll.py'.format(python_sources_dir)
-    coord_log('removing all znodes except /zookeeper')
-    run('''python {0} /'''.format(purge_script_path))
+    coord_log('removing all znodes except /zookeeper and /kafka_perf_test')
+    run_with_logging('python {0} /'''.format(purge_script_path))
     coord_log('purging complete')
 
 @task
@@ -118,21 +126,21 @@ def purge_zookeeper():
 @roles('kafka')
 def cleanup_after_kafka():
     coord_log('emptying kafka log directories')
-    run('rm -rf {0}'.format(kafka_data_dir))
-    run('mkdir -p {0}', kafka_data_dir)
+    run_with_logging('rm -rf {0}'.format(kafka_data_dir))
+    run_with_logging('mkdir -p {0}'.format(kafka_data_dir))
     coord_log('kafka log directories emptied')
 
 @task
 @parallel
 @roles('kafka')
 def remove_kafka_log():
-    run('rm -f {}'.format(kafka_log_file))
+    run_with_logging('rm -f {}'.format(kafka_log_file))
 
 @task
 @parallel
 @roles('prod')
 def remove_result_files():
-    run('rm -rf {}'.format(results_file_path))
+    run_with_logging('rm -rf {}'.format(results_file_path))
 
 @task
 @parallel
@@ -141,30 +149,33 @@ def ensure_kafka_running():
     kafka_start_script_path = '{0}/bin/kafka-server-start.sh'.format(kafka_dir)
     kafka_config_path = '{0}/config/server.properties'.format(kafka_dir)
     coord_log('ensuring kafka is running')
-    run('export JMX_PORT={0} && {1} -daemon {2}'.format(kafka_jmx_port, kafka_start_script_path, kafka_config_path))
+    run_with_logging('export JMX_PORT={0} && {1} -daemon {2}'
+                     .format(kafka_jmx_port, kafka_start_script_path, kafka_config_path))
     coord_log('kafka should be running')
 
 @task
 @roles('prod_chosen')
 def create_topics(number_of_topics):
     coord_log('creating topics')
-    run('java -jar {} -T {} -c'.format(test_worker_jar, number_of_topics))
+    run_with_logging('java -jar {} -T {} -c'.format(test_worker_jar, number_of_topics))
     coord_log('topics created')
 
 @task
 @parallel
-@roles('prod')
-def run_test(series, reps, threads, topics):
-    coord_log('executing actual test')
-    run('java -jar {0} -s {1} -r {2} -t {3} -T {4} > {5}'.format(test_worker_jar, series, reps, threads, topics, results_file_path))
-    coord_log('test execution finished')
+@roles('all')
+def log_actual_testing_started():
+    coord_log('actual testing started')
+
+def run_test(duration, message_size, topics):
+    execute(log_actual_testing_started)
+    local('python {} -d {} -s {} -t {}'.format(orchestrator_script_path, duration, message_size, topics))
 
 @task
 @parallel
 @roles('all')
-def log_test_set_execution_start(set_name, series, reps, threads, topics):
-    coord_log('starting test set {} (series = {}, reps = {}, threads = {}, topics = {})'
-              .format(set_name, series, reps, threads, topics))
+def log_test_set_execution_start(set_name, duration, message_size, topics):
+    coord_log('starting test set {} (duration = {}, message_size = {}, topics = {})'
+              .format(set_name, duration, message_size, topics))
 
 @task
 @parallel
@@ -173,8 +184,8 @@ def log_test_set_execution_end(set_name):
     coord_log('test set {} finished'.format(set_name))
 
 @task
-def run_test_set(suite_name, set_name, series, reps, threads, topics):
-    execute(log_test_set_execution_start, set_name, series, reps, threads, topics)
+def run_test_set(suite_name, set_name, duration, message_size, topics):
+    execute(log_test_set_execution_start, set_name, duration, message_size, topics)
 
     execute(stop_kafka)
     execute(cleanup_after_kafka)
@@ -184,7 +195,7 @@ def run_test_set(suite_name, set_name, series, reps, threads, topics):
     execute(remove_result_files)
     execute(create_topics, topics)
 
-    execute(run_test, series, reps, threads, topics)
+    execute(run_test, duration, message_size, topics)
 
     for host in h('prod'):
         current_log_dir = "{}/{}/{}/{}".format(local_log_directory, suite_name, set_name, host)
@@ -192,11 +203,11 @@ def run_test_set(suite_name, set_name, series, reps, threads, topics):
         download_file(host, results_file_path, current_log_dir)
         download_file(host, kafka_log_file, current_log_dir)
 
-    execute(log_test_set_execution_end, suite_name)
+    execute(log_test_set_execution_end, set_name)
 
 @task
 @runs_once
-def run_test_suite(topics='[1]', series=1, reps=10, threads=2):
+def run_test_suite(topics='[1]', series=1, duration=60.0, message_size=500):
     suite_name = datetime.datetime.now().strftime('%H%M_%d%m%y')
     suite_log_dir = "{}/{}".format(local_log_directory, suite_name)
     local('mkdir -p {}'.format(suite_log_dir))
@@ -209,7 +220,7 @@ def run_test_suite(topics='[1]', series=1, reps=10, threads=2):
         for i in range(0, len(topic_progression)):
             for j in range(0, int(series)):
                 set_name = 't{}_{}'.format(str(topic_progression[i]), str(j))
-                execute(run_test_set, suite_name, set_name, 1, reps, threads, topic_progression[i])
+                execute(run_test_set, suite_name, set_name, duration, message_size, topic_progression[i])
 
         for host in h('zk'):
             local_dir = '{}/{}/persuite/{}'.format(local_log_directory, suite_name, host)
