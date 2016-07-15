@@ -1,9 +1,7 @@
 # todo: add analyzer part
-# todo: currently we have shell scripts reimplemented; now add repeating of whole tests
 # todo: use fabric.operations.get
 # todo: add host aliases
 # todo: redirect command outputs to coordinator
-# todo: neither kafka's not zk's logs are downloaded
 
 import ast
 import datetime
@@ -16,7 +14,7 @@ env.shell = "/bin/bash -c"
 env.always_use_pty = False
 
 zk_jmx_port=9091
-kafka_jmx_port=9092
+kafka_jmx_port=9093
 
 class RemoteException(Exception):
     pass
