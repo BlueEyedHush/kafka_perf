@@ -20,7 +20,7 @@ def main(args):
     except NodeExistsError:
         logging.info('{} already exists, no need to create'.format(test_znode))
 
-    params = (args.message_size, args.threads, args.topics)
+    params = (args.message_size, args.topics)
     zk.set(test_znode, 'start{}'.format(str(params)))
 
     t_start = time.time() # in seconds
@@ -39,8 +39,6 @@ def get_cli_arguments():
                         help='duration of the test (in seconds)')
     parser.add_argument('-s', dest='message_size', action='store', default=500, required=False, type=int,
                         help='size of messages sent to the broker (in bytes)')
-    parser.add_argument('-t', dest='threads', action='store', default=1, required=False, type=int,
-                        help='number of threads each instance will use for sending messages')
     parser.add_argument('-T', dest='topics', action='store', default=1, required=False, type=int,
                         help='number of topics to which messages will be sent')
 
