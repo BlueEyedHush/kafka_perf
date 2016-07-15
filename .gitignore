@@ -6,3 +6,4 @@ keyfile.sh
 zkonly
 logs/
 *.pyc
+*.out
