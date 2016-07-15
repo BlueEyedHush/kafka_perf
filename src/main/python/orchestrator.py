@@ -1,32 +1,54 @@
+import argparse
 import logging
 import time
-
 from kazoo.client import KazooClient
 from kazoo.exceptions import NodeExistsError
 
 zk_host='188.184.165.208:2181'
-zk_test_sync_znode = '/kafka_perf/test_status'
+test_znode = '/kafka_perf_test'
 
-def main():
-    test_time = 120.0 # in seconds
-
+def main(args):
     zk = KazooClient(hosts=zk_host)
     zk.start()
 
     try:
-        zk.create(path=zk_test_sync_znode, makepath=True)
+        zk.create(path=test_znode, makepath=True)
     except NodeExistsError:
-        logging.info('{} already exists, no need to create'.format(zk_test_sync_znode))
+        logging.info('{} already exists, no need to create'.format(test_znode))
 
-    zk.set(zk_test_sync_znode, 'start')
+    params = (args.message_size, args.threads, args.topics)
+    zk.set(test_znode, 'start{}'.format(str(params)))
 
     t_start = time.time() # in seconds
-    t_end = t_start + test_time
+    t_end = t_start + args.duration
 
     while(time.time() < t_end):
         time.sleep(t_end - time.time()) # shouldn't introduce error larger than 10-15 ms
 
-    zk.set(zk_test_sync_znode, 'stop')
+    zk.set(test_znode, 'stop')
+    zk.stop()
+
+def get_cli_arguments():
+    parser = argparse.ArgumentParser(description='Synchronize performance tests across nodes.')
+
+    parser.add_argument('-d', dest='duration', action='store', default=30.0, required=False, type=float,
+                        help='duration of the test (in seconds)')
+    parser.add_argument('-s', dest='message_size', action='store', default=500, required=False, type=int,
+                        help='size of messages sent to the broker (in bytes)')
+    parser.add_argument('-t', dest='threads', action='store', default=1, required=False, type=int,
+                        help='number of threads each instance will use for sending messages')
+    parser.add_argument('-T', dest='topics', action='store', default=1, required=False, type=int,
+                        help='number of topics to which messages will be sent')
+
+    return parser.parse_args()
+
+def create_znodes(zk, path_list):
+    for path in path_list:
+        try:
+            zk.create(path=path, makepath=True)
+        except NodeExistsError:
+            logging.info('{} already exists, no need to create'.format(test_znode))
 
 if __name__ == "__main__":
-    main()
+    args = get_cli_arguments()
+    main(args)
