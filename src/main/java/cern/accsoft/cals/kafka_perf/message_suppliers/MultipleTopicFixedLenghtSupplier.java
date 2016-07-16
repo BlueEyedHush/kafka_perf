@@ -21,4 +21,10 @@ public class MultipleTopicFixedLenghtSupplier implements MessageSupplier {
         int topicId = generator.nextInt(topicNumber);
         return new ProducerRecord<>(String.valueOf(topicId), msg);
     }
+
+    @Override
+    public String toString() {
+        return String.format("[%s] messageLength = %d, topicNumber = %d",
+                MultipleTopicFixedLenghtSupplier.class.getSimpleName(), msg.length(), topicNumber);
+    }
 }

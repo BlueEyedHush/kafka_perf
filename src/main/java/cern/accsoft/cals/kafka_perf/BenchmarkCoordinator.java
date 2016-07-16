@@ -26,6 +26,7 @@ public class BenchmarkCoordinator {
 
     private final List<BenchmarkingService> services;
     private final FileReporter reporter;
+    private boolean testIsRunning = false;
     private final CountDownLatch terminationLatch = new CountDownLatch(1);
 
     public BenchmarkCoordinator(List<BenchmarkingService> services, FileReporter reporter) {
@@ -96,16 +97,24 @@ public class BenchmarkCoordinator {
     }
 
     private void startTest(int messageSize, int topics) {
-        services.forEach(BenchmarkingService::startTest);
+        if(testIsRunning) throw new IllegalStateException("Test is already running!");
+
+        testIsRunning = true;
+
+        services.forEach(s -> s.startTest(messageSize, topics));
         LOGGER.info("Test started with parameters: message_size={}, topics={}", messageSize, topics);
     }
 
     private void stopTest() {
+        if(!testIsRunning) throw new IllegalStateException("Cannot stop test which is not running!");
+
         List<Long> results = services.stream()
                 .map(BenchmarkingService::stopTestAndReturnResults) // side effect!
                 .collect(Collectors.toList());
 
         reporter.report(results);
+        testIsRunning = false;
+
         LOGGER.info("Test stopped");
     }
 

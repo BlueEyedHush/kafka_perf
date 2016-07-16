@@ -1,6 +1,5 @@
 package cern.accsoft.cals.kafka_perf;
 
-import cern.accsoft.cals.kafka_perf.message_suppliers.MultipleTopicFixedLenghtSupplier;
 import cern.accsoft.cals.kafka_perf.reporters.FileReporter;
 import com.martiansoftware.jsap.*;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -55,8 +54,7 @@ public class App {
         if(!config.getBoolean(TOPIC_CREATION_MODE_OPT)) {
             List<BenchmarkingService> benchmarkingServiceList = new ArrayList<>(threads);
             for (int i = 0; i < threads; i++) {
-                BenchmarkingService service = BenchmarkingService
-                        .spawnAndStartBenchmarkingService(new MultipleTopicFixedLenghtSupplier(500, topics));
+                BenchmarkingService service = BenchmarkingService.spawnAndStartBenchmarkingService();
                 benchmarkingServiceList.add(service);
             }
 
