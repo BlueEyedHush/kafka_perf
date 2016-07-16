@@ -47,7 +47,7 @@ public class BenchmarkingService implements Runnable {
 
     @Override
     public void run() {
-        try (KafkaProducer<String, String> producer = new KafkaProducer<>(Configuration.KAFKA_CONFIGURATION)) {
+        try (KafkaProducer<String, String> producer = new KafkaProducer<>(Config.KAFKA_CONFIGURATION)) {
             while(true) {
                 /* benchmark */
                 if(running) {

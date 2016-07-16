@@ -61,5 +61,4 @@ def register_emergency_signal_handler(zk):
 
 if __name__ == "__main__":
     args = get_cli_arguments()
-    print 'orchestrator!'
-    #main(args)
+    main(args)

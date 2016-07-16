@@ -48,21 +48,23 @@ public class App {
         return config;
     }
 
-    private void start(JSAPResult config) {
+    private void start(JSAPResult config) throws Exception { /* Exception from coordinator.run() */
         final int topics = config.getInt(TOPICS_OPT);
         final int threads = config.getInt(THREADS_OPT);
 
         if(!config.getBoolean(TOPIC_CREATION_MODE_OPT)) {
             List<BenchmarkingService> benchmarkingServiceList = new ArrayList<>(threads);
             for (int i = 0; i < threads; i++) {
-                BenchmarkingService.spawnAndStartBenchmarkingService(new MultipleTopicFixedLenghtSupplier(500, topics));
+                BenchmarkingService service = BenchmarkingService
+                        .spawnAndStartBenchmarkingService(new MultipleTopicFixedLenghtSupplier(500, topics));
+                benchmarkingServiceList.add(service);
             }
 
             FileReporter r = new FileReporter(Paths.get(RESULTS_FILE_PATH));
             BenchmarkCoordinator coordinator = new BenchmarkCoordinator(benchmarkingServiceList, r);
             coordinator.run();
         } else {
-            try (KafkaProducer<String, String> producer = new KafkaProducer<>(Configuration.KAFKA_CONFIGURATION)) {
+            try (KafkaProducer<String, String> producer = new KafkaProducer<>(Config.KAFKA_CONFIGURATION)) {
                 for(int i = 0; i < topics; i++) {
                     producer.send(new ProducerRecord<>(String.valueOf(i), "tc"));
                 }
