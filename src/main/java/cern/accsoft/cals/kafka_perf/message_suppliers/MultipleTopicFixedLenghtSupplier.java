@@ -4,9 +4,8 @@ import cern.accsoft.cals.kafka_perf.Utils;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.util.Random;
-import java.util.function.Supplier;
 
-public class MultipleTopicFixedLenghtSupplier implements Supplier<ProducerRecord<String, String>> {
+public class MultipleTopicFixedLenghtSupplier implements MessageSupplier {
 
     private final String msg;
     private final int topicNumber;

@@ -1,13 +1,12 @@
 package cern.accsoft.cals.kafka_perf;
 
+import cern.accsoft.cals.kafka_perf.message_suppliers.MessageSupplier;
+import cern.accsoft.cals.kafka_perf.message_suppliers.MultipleTopicFixedLenghtSupplier;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-
-import java.util.function.Supplier;
 
 public class BenchmarkingService implements Runnable {
-    public static BenchmarkingService spawnAndStartBenchmarkingService(Supplier<ProducerRecord<String, String>> messageSupplier) {
-        BenchmarkingService bs = new BenchmarkingService(messageSupplier);
+    public static BenchmarkingService spawnAndStartBenchmarkingService() {
+        BenchmarkingService bs = new BenchmarkingService();
 
         Thread t = new Thread(bs, "benchmarking_thread");
         t.setDaemon(true);
@@ -16,22 +15,23 @@ public class BenchmarkingService implements Runnable {
         return bs;
     }
 
-    private final Supplier<ProducerRecord<String, String>> messageSupplier;
-
+    private MessageSupplier messageSupplier;
     private volatile boolean running = false;
     private volatile long message_count = 0;
 
-    public BenchmarkingService(Supplier<ProducerRecord<String, String>> messageSupplier) {
-        this.messageSupplier = messageSupplier;
-    }
+    public BenchmarkingService() {}
 
     /**
      * Called from another thread
      */
-    public void startTest() {
+    public void startTest(int messageSize, int topicCount) {
         if(running) throw new IllegalStateException("Test is already running!");
 
+        /* is this safe */
+        messageSupplier = new MultipleTopicFixedLenghtSupplier(messageSize, topicCount);
         message_count = 0;
+        /* write to volatile - should create memory barrier, therefore neither assignments of above fields, nor
+         * writes which initialize MultipleTopic... can be reordered beyond that point */
         running = true;
     }
 
@@ -51,7 +51,7 @@ public class BenchmarkingService implements Runnable {
             while(true) {
                 /* benchmark */
                 if(running) {
-                    long message_count = benchmark(producer);
+                    message_count = benchmark(producer);
                 }
             }
         }

@@ -3,9 +3,7 @@ package cern.accsoft.cals.kafka_perf.message_suppliers;
 import cern.accsoft.cals.kafka_perf.Utils;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
-import java.util.function.Supplier;
-
-public class SingleTopicFixedLengthSupplier implements Supplier<ProducerRecord<String, String>> {
+public class SingleTopicFixedLengthSupplier implements MessageSupplier {
 
     private final String msg;
 
