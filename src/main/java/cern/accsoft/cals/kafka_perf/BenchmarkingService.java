@@ -21,7 +21,7 @@ public class BenchmarkingService implements Runnable {
 
     private Semaphore semaphore;
     private MessageSupplier messageSupplier;
-    private volatile long message_count = 0;
+    private volatile long messageCount = 0;
 
     public BenchmarkingService(int partitionsPerTopic) {
         this.partitionsPerTopic = partitionsPerTopic;
@@ -36,16 +36,19 @@ public class BenchmarkingService implements Runnable {
     public void startTest(int messageSize, int topicCount) {
         /* is this safe */
         messageSupplier = new MultipleTopicFixedLenghtSupplier(messageSize, topicCount, partitionsPerTopic);
-        message_count = 0;
+        messageCount = 0;
         semaphore.release();
     }
 
     /**
      * Called from another thread
      */
-    public long stopTestAndReturnResults() {
+    public long getMessageCount() {
+        return messageCount;
+    }
+
+    public void stop() {
         semaphore.acquireUninterruptibly();
-        return message_count;
     }
 
     @Override
@@ -57,7 +60,7 @@ public class BenchmarkingService implements Runnable {
                 semaphore.acquireUninterruptibly();
                 try {
                     producer.send(messageSupplier.get());
-                    message_count++;
+                    messageCount++;
                 } finally {
                     semaphore.release();
                 }

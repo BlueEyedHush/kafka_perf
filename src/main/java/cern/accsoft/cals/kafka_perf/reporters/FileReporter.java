@@ -48,5 +48,7 @@ public class FileReporter {
             writer.write(value.toString());
             writer.write('\n');
         }
+
+        writer.flush();
     }
 }

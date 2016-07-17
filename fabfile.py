@@ -55,6 +55,9 @@ def coord_log(msg):
 def get_random_string(length):
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
 
+def download_file_error(host, from_path, to_path):
+    os.system('scp {}:{} {}'.format(host, from_path, to_path))
+
 def download_file(host, from_path, to_path):
     os.system('scp {}:{} {} || true'.format(host, from_path, to_path))
 
@@ -221,7 +224,15 @@ def run_test_set(suite_name, set_name, duration, message_size, topics):
     for host in h('prod'):
         current_log_dir = "{}/{}/{}/{}".format(local_log_directory, suite_name, set_name, host)
         local('mkdir -p {}'.format(current_log_dir))
-        download_file(host, results_file_path, current_log_dir)
+
+        succeeded = False
+        while(not succeeded):
+            try:
+                download_file_error(host, results_file_path, current_log_dir)
+                succeeded = True
+            except RemoteException:
+                pass # succeed is already false
+
         download_file(host, kafka_log_file, current_log_dir)
 
     execute(log_test_set_execution_end, set_name)

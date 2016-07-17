@@ -109,10 +109,12 @@ public class BenchmarkCoordinator {
         if(!testIsRunning) throw new IllegalStateException("Cannot stop test which is not running!");
 
         List<Long> results = services.stream()
-                .map(BenchmarkingService::stopTestAndReturnResults) // side effect!
+                .map(BenchmarkingService::getMessageCount) // side effect!
                 .collect(Collectors.toList());
 
         reporter.report(results);
+
+        services.forEach(BenchmarkingService::stop);
         testIsRunning = false;
 
         LOGGER.info("Test stopped");
