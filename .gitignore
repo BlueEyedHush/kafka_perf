@@ -7,3 +7,4 @@ zkonly
 logs/
 *.pyc
 *.out
+*.log
