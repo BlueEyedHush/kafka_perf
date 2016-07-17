@@ -2,6 +2,7 @@ package cern.accsoft.cals.kafka_perf;
 
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 
 import java.util.Collections;
@@ -14,9 +15,9 @@ public class Config {
     static {
         Map<String, Object> m = new HashMap<>();
 
-        m.put("bootstrap.servers", "128.142.128.88:9092,128.142.134.233:9092");
-        m.put("key.serializer", ByteArraySerializer.class);
-        m.put("value.serializer", ByteArraySerializer.class);
+        m.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "128.142.128.88:9092,128.142.134.233:9092");
+        m.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+        m.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
 
         KAFKA_CONFIGURATION = Collections.unmodifiableMap(m);
     }
