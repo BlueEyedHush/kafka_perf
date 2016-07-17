@@ -1,12 +1,13 @@
 package cern.accsoft.cals.kafka_perf;
 
-public class Utils {
-    public static String generateWithLength(int length) {
-        StringBuilder builder = new StringBuilder();
-        for(int i = 0; i < length; i++) {
-            builder.append("A");
-        }
+import java.util.Random;
 
-        return builder.toString();
+public class Utils {
+    private static final Random generator = new Random();
+
+    public static byte[] generateWithLength(int length) {
+        byte[] arr = new byte[length];
+        generator.nextBytes(arr);
+        return arr;
     }
 }

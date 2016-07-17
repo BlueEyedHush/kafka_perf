@@ -20,6 +20,7 @@ public class App {
     private static final Logger LOGGER = LoggerFactory.getLogger("main");
 
     private static final String THREADS_OPT = "threads";
+    private static final String PARTITIONS_OPT = "partitions";
     private static final String TOPICS_OPT = "topics";
     private static final String TOPIC_CREATION_MODE_OPT = "tc_mode";
 
@@ -34,6 +35,8 @@ public class App {
                 new Parameter[]{
                         new FlaggedOption(THREADS_OPT, JSAP.INTEGER_PARSER, "1", JSAP.NOT_REQUIRED, 't', JSAP.NO_LONGFLAG,
                                 "Number of threads sending messages"),
+                        new FlaggedOption(PARTITIONS_OPT, JSAP.INTEGER_PARSER, "2", JSAP.NOT_REQUIRED, 'p', JSAP.NO_LONGFLAG,
+                                "Number of paritions per topic"),
                         new FlaggedOption(TOPICS_OPT, JSAP.INTEGER_PARSER, "1", JSAP.NOT_REQUIRED, 'T', JSAP.NO_LONGFLAG,
                                 "Number of topics to which messages will be sent. Only relevant in topic creation mode."),
                         new Switch(TOPIC_CREATION_MODE_OPT, 'c', JSAP.NO_LONGFLAG,
@@ -50,11 +53,12 @@ public class App {
     private void start(JSAPResult config) throws Exception { /* Exception from coordinator.run() */
         final int topics = config.getInt(TOPICS_OPT);
         final int threads = config.getInt(THREADS_OPT);
+        final int partitions = config.getInt(PARTITIONS_OPT);
 
         if(!config.getBoolean(TOPIC_CREATION_MODE_OPT)) {
             List<BenchmarkingService> benchmarkingServiceList = new ArrayList<>(threads);
             for (int i = 0; i < threads; i++) {
-                BenchmarkingService service = BenchmarkingService.spawnAndStartBenchmarkingService();
+                BenchmarkingService service = BenchmarkingService.spawnAndStartBenchmarkingService(partitions);
                 benchmarkingServiceList.add(service);
             }
 

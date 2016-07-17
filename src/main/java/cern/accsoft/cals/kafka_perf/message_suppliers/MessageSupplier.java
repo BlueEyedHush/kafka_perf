@@ -7,5 +7,5 @@ import java.util.function.Supplier;
 /**
  * To have shorter types names
  */
-public interface MessageSupplier extends Supplier<ProducerRecord<String, String>> {
+public interface MessageSupplier extends Supplier<ProducerRecord<byte[], byte[]>> {
 }

@@ -7,24 +7,27 @@ import java.util.Random;
 
 public class MultipleTopicFixedLenghtSupplier implements MessageSupplier {
 
-    private final String msg;
-    private final int topicNumber;
     private final Random generator = new Random();
+    private final byte[] msg;
+    private final int topicNumber;
+    private final int partitionNumber;
 
-    public MultipleTopicFixedLenghtSupplier(int messageLength, int topicNumber) {
+    public MultipleTopicFixedLenghtSupplier(int messageLength, int topicNumber, int partitionNumber) {
+        this.partitionNumber = partitionNumber;
         this.msg = Utils.generateWithLength(messageLength);
         this.topicNumber = topicNumber;
     }
 
     @Override
-    public ProducerRecord<String, String> get() {
+    public ProducerRecord<byte[], byte[]> get() {
         int topicId = generator.nextInt(topicNumber);
-        return new ProducerRecord<>(String.valueOf(topicId), msg);
+        int partitionId = generator.nextInt(partitionNumber);
+        return new ProducerRecord<>(String.valueOf(topicId), partitionId, null, msg);
     }
 
     @Override
     public String toString() {
-        return String.format("[%s] messageLength = %d, topicNumber = %d",
-                MultipleTopicFixedLenghtSupplier.class.getSimpleName(), msg.length(), topicNumber);
+        return String.format("[%s] messageLength = %d, topicNumber = %d, partitionNumber = %d",
+                MultipleTopicFixedLenghtSupplier.class.getSimpleName(), msg.length, topicNumber, partitionNumber);
     }
 }

@@ -7,8 +7,10 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import java.util.concurrent.Semaphore;
 
 public class BenchmarkingService implements Runnable {
-    public static BenchmarkingService spawnAndStartBenchmarkingService() {
-        BenchmarkingService bs = new BenchmarkingService();
+    private final int partitionsPerTopic;
+
+    public static BenchmarkingService spawnAndStartBenchmarkingService(int partitionsPerTopic) {
+        BenchmarkingService bs = new BenchmarkingService(partitionsPerTopic);
 
         Thread t = new Thread(bs, "benchmarking_thread");
         t.setDaemon(true);
@@ -21,7 +23,8 @@ public class BenchmarkingService implements Runnable {
     private MessageSupplier messageSupplier;
     private volatile long message_count = 0;
 
-    public BenchmarkingService() {
+    public BenchmarkingService(int partitionsPerTopic) {
+        this.partitionsPerTopic = partitionsPerTopic;
         semaphore = new Semaphore(1, true);
         semaphore.acquireUninterruptibly();
     }
@@ -32,7 +35,7 @@ public class BenchmarkingService implements Runnable {
      */
     public void startTest(int messageSize, int topicCount) {
         /* is this safe */
-        messageSupplier = new MultipleTopicFixedLenghtSupplier(messageSize, topicCount);
+        messageSupplier = new MultipleTopicFixedLenghtSupplier(messageSize, topicCount, partitionsPerTopic);
         message_count = 0;
         semaphore.release();
     }
@@ -47,7 +50,7 @@ public class BenchmarkingService implements Runnable {
 
     @Override
     public void run() {
-        try (KafkaProducer<String, String> producer = new KafkaProducer<>(Config.KAFKA_CONFIGURATION)) {
+        try (KafkaProducer<byte[], byte[]> producer = new KafkaProducer<>(Config.KAFKA_CONFIGURATION)) {
             while(true) {
                 /* while we are OK to test, semaphore is down - but when stop command arrives, other thread will still it
                  * and won't release it until time for a new session arrives */
