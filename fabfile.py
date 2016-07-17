@@ -258,8 +258,14 @@ def run_test_suite(topics='[1]', series=1, duration=60.0, message_size=500, thre
         #analyze data
         suite_root = '{}/{}'.format(local_log_directory, suite_name)
         analysis_results_out_path = '{}/collective_results'.format(suite_root)
-        local('python {} {} {} {} {} {} > {}'.format(analyzer_script_path, suite_root,
-                                                topics, series, message_size, duration, analysis_results_out_path))
+        local('python {} {} {} {} {} {} {} > {}'.format(analyzer_script_path,
+                                                        suite_root,
+                                                        topics,
+                                                        series,
+                                                        message_size,
+                                                        duration,
+                                                        len(env.roledefs['prod']),
+                                                        analysis_results_out_path))
     finally:
         emergency_log_copy()
 
