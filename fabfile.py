@@ -39,6 +39,7 @@ test_worker_jar = '{}/target/kafka_perf_test-0.1-jar-with-dependencies.jar'.form
 
 remote_log_directory = '/var/log/kafka_perf'
 coordinator_log_path = './coordinator.out' # this file is stored remotelly, and then copied somewhere under local log dir
+bench_service_log_path = '{}/bench.out'.format(remote_log_directory)
 local_log_directory = './logs'
 emergency_local_log_directory = '{}/emergency'.format(local_log_directory)
 
@@ -64,6 +65,11 @@ def emergency_log_copy():
         download_file(host, coordinator_log_path, host_log_dir)
         download_file(host, kafka_log_file, host_log_dir)
 
+    for host in h('prod'):
+        host_log_dir = '{}/{}'.format(emergency_local_log_directory, host)
+        os.system('mkdir -p {}'.format(host_log_dir))
+        download_file(host, bench_service_log_path, host_log_dir)
+
 
 env.roledefs = {
     'all': ['128.142.128.88','128.142.134.233','188.184.165.208','128.142.242.119','128.142.134.55'],
@@ -79,6 +85,9 @@ def h(name):
 
 def run_with_logging(command):
     run('{} 2>&1 | tee -a {}'.format(command, coordinator_log_path))
+
+def run_daemonized(cmd, log_path):
+    run('nohup {0} > {1} 2>&1 < /dev/null &'.format(cmd, log_path))
 
 @task
 @parallel
@@ -101,6 +110,16 @@ def stop_kafka():
     coord_log('stopping kafka')
     run_with_logging('''for pid in `ps aux | grep [k]afka.logs.dir | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done''')
     coord_log('kafka_stopped')
+
+@task
+@parallel
+@roles('prod')
+def restart_benchmark_daemons(threads):
+    coord_log('stopping testing daemons')
+    run_with_logging('''for pid in `ps aux | grep [k]afka_perf_test | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done''')
+    run('mv {} /tmp || true'.format(bench_service_log_path))
+    coord_log('starting testing daemons')
+    run_daemonized('java -jar {} -t {}'.format(test_worker_jar, threads), bench_service_log_path)
 
 @task
 @parallel
@@ -207,7 +226,7 @@ def run_test_set(suite_name, set_name, duration, message_size, topics):
 
 @task
 @runs_once
-def run_test_suite(topics='[1]', series=1, duration=60.0, message_size=500):
+def run_test_suite(topics='[1]', series=1, duration=60.0, message_size=500, threads=3):
     suite_name = datetime.datetime.now().strftime('%H%M_%d%m%y')
     suite_log_dir = "{}/{}".format(local_log_directory, suite_name)
     local('mkdir -p {}'.format(suite_log_dir))
@@ -215,6 +234,7 @@ def run_test_suite(topics='[1]', series=1, duration=60.0, message_size=500):
     try:
         execute(init)
         execute(ensure_zk_running)
+        execute(restart_benchmark_daemons, threads)
 
         topic_progression = ast.literal_eval(topics)
         for i in range(0, len(topic_progression)):
@@ -227,6 +247,11 @@ def run_test_suite(topics='[1]', series=1, duration=60.0, message_size=500):
             local('mkdir -p {}'.format(local_dir))
             download_file(host, zookeeper_log_file, local_dir)
             download_file(host, coordinator_log_path, local_dir)
+
+        for host in h('prod'):
+            local_dir = '{}/{}/persuite/{}'.format(local_log_directory, suite_name, host)
+            local('mkdir -p {}'.format(local_dir))
+            download_file(host, bench_service_log_path, local_dir)
     finally:
         emergency_log_copy()
 

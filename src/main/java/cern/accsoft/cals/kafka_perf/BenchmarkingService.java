@@ -54,7 +54,6 @@ public class BenchmarkingService implements Runnable {
                 semaphore.acquireUninterruptibly();
                 try {
                     producer.send(messageSupplier.get());
-                    System.out.print("t");
                     message_count++;
                 } finally {
                     semaphore.release();

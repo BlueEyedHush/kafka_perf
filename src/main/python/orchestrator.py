@@ -20,8 +20,7 @@ def main(args):
     except NodeExistsError:
         logging.info('{} already exists, no need to create'.format(test_znode))
 
-    params = (args.message_size, args.topics)
-    zk.set(test_znode, 'start{}'.format(str(params)))
+    zk.set(test_znode, 'start({},{})'.format(args.message_size, args.topics))
 
     t_start = time.time() # in seconds
     t_end = t_start + args.duration
