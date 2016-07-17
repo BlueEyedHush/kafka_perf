@@ -1,9 +1,8 @@
-
-import sys
-import numpy as np
 import ast
 import glob
-import pprint
+import numpy as np
+import sys
+
 
 def load_and_parse_data(results_root, topics_list, series):
     results = {} # map (from topics_no) to list of lists (series of results from different threads/nodes)
@@ -32,26 +31,29 @@ def calculate_percentiles(data):
     map_of_percentiles = dict(map(lambda (k,v): (k, np.percentile(v, 10)), map_with_numpy_arr.iteritems()))
     return map_of_percentiles
 
-def combine_percentiles(perc):
-    return np.sum(perc)
+def calculate_stats(messages_in_time, time, message_size):
+    messages_per_sec = messages_in_time / time
+    throughput = float(messages_in_time) * message_size / time
+    return (messages_per_sec, throughput)
 
-def print_results(map):
+def print_results(map, time, msize):
     for k in sorted(map):
-        print('{: >10} {: >20,.2f}'.format(k,map[k]))
+        mesgs_in_time = map[k]
+        mesgs_per_sec, throughput = calculate_stats(mesgs_in_time, time, msize)
+        print('{: >10} {: >20,.2f} {: >20,.2f} {: >20,.2f}'.format(k, mesgs_in_time, mesgs_per_sec, throughput))
 
 def main():
     results_root = sys.argv[1]
     topics_list = ast.literal_eval(sys.argv[2])
     series = int(sys.argv[3])
+    mszie = int(sys.argv[4])
+    time= float(sys.argv[5])
 
     input_data = load_and_parse_data(results_root, topics_list, series)
     summed_input_data = sum_across_threads_and_nodes(input_data)
     map_of_percentiels = calculate_percentiles(summed_input_data)
 
-    print_results(map_of_percentiels)
-    # pp = pprint.PrettyPrinter(indent=2)
-    # print pp.pprint(map_of_percentiels)
-    #print combine_percentiles(percentiels)
+    print_results(map_of_percentiels, time, mszie)
 
 if __name__ == "__main__":
     main()

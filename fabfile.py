@@ -23,6 +23,7 @@ env.abort_exception = RemoteException
 
 local_python_dir='./src/main/python'
 orchestrator_script_path='{}/orchestrator.py'.format(local_python_dir)
+analyzer_script_path = '{}/analyzer.py'.format(local_python_dir)
 
 base_app_dir = '/opt/kafka_perf'
 base_data_dir = '/mnt/vol1'
@@ -252,6 +253,12 @@ def run_test_suite(topics='[1]', series=1, duration=60.0, message_size=500, thre
             local_dir = '{}/{}/persuite/{}'.format(local_log_directory, suite_name, host)
             local('mkdir -p {}'.format(local_dir))
             download_file(host, bench_service_log_path, local_dir)
+
+        #analyze data
+        suite_root = '{}/{}'.format(local_log_directory, suite_name)
+        analysis_results_out_path = '{}/collective_results'.format(suite_root)
+        local('python {} {} {} {} {} {} > {}'.format(analyzer_script_path, suite_root,
+                                                topics, series, message_size, duration, analysis_results_out_path))
     finally:
         emergency_log_copy()
 
