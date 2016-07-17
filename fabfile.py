@@ -228,7 +228,7 @@ def run_test_set(suite_name, set_name, duration, message_size, topics):
 @task
 @runs_once
 def run_test_suite(topics='[1]', series=1, duration=60.0, message_size=500, threads=3):
-    suite_name = datetime.datetime.now().strftime('%H%M_%d%m%y')
+    suite_name = datetime.datetime.now().strftime('%d%m%y_%H%M')
     suite_log_dir = "{}/{}".format(local_log_directory, suite_name)
     local('mkdir -p {}'.format(suite_log_dir))
 
