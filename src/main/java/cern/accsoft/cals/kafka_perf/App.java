@@ -66,9 +66,10 @@ public class App {
             BenchmarkCoordinator coordinator = new BenchmarkCoordinator(benchmarkingServiceList, r);
             coordinator.run();
         } else {
-            try (KafkaProducer<String, String> producer = new KafkaProducer<>(Config.KAFKA_CONFIGURATION)) {
+            try (KafkaProducer<byte[], byte[]> producer = new KafkaProducer<>(Config.KAFKA_CONFIGURATION)) {
+                byte[] content = {0,1,2};
                 for(int i = 0; i < topics; i++) {
-                    producer.send(new ProducerRecord<>(String.valueOf(i), "tc"));
+                    producer.send(new ProducerRecord<>(String.valueOf(i), content));
                 }
             }
         }
