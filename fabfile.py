@@ -189,6 +189,7 @@ def log_actual_testing_started():
 def run_test(duration, message_size, topics):
     execute(log_actual_testing_started)
     local('python {} -d {} -s {} -t {}'.format(orchestrator_script_path, duration, message_size, topics))
+    local('sleep 5s')
 
 @task
 @parallel
