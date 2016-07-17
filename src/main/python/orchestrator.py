@@ -16,11 +16,12 @@ def main(args):
     register_emergency_signal_handler(zk)
 
     try:
-        zk.create(path=test_znode, makepath=True)
+        zk.retry(zk.create(path=test_znode, makepath=True))
     except NodeExistsError:
         logging.info('{} already exists, no need to create'.format(test_znode))
 
-    zk.set(test_znode, 'start({},{})'.format(args.message_size, args.topics))
+    start_command = 'start({},{})'.format(args.message_size, args.topics)
+    zk.retry(lambda: zk.set(test_znode, start_command))
 
     t_start = time.time() # in seconds
     t_end = t_start + args.duration
@@ -28,7 +29,7 @@ def main(args):
     while(time.time() < t_end):
         time.sleep(t_end - time.time()) # shouldn't introduce error larger than 10-15 ms
 
-    zk.set(test_znode, 'stop')
+    zk.retry(lambda: zk.set(test_znode, 'stop'))
     zk.stop()
 
 def get_cli_arguments():
@@ -46,13 +47,13 @@ def get_cli_arguments():
 def create_znodes(zk, path_list):
     for path in path_list:
         try:
-            zk.create(path=path, makepath=True)
+            zk.retry(lambda: zk.create(path=path, makepath=True))
         except NodeExistsError:
             logging.info('{} already exists, no need to create'.format(test_znode))
 
 def register_emergency_signal_handler(zk):
     def signal_handler(signal, frame):
-        zk.set(test_znode, 'stop')
+        zk.retry(lambda: zk.set(test_znode, 'stop'))
         zk.stop()
         sys.exit(0)
 
