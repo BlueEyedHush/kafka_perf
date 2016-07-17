@@ -66,7 +66,6 @@ def main():
     input_data, warns = load_and_parse_data(results_root, topics_list, series, nodes_count)
     summed_input_data = sum_across_threads_and_nodes(input_data)
     without_missing = filter_missing(summed_input_data)
-    print without_missing
     map_of_percentiels = calculate_percentiles(without_missing)
 
     print_results(map_of_percentiels, warns, time, mszie)
