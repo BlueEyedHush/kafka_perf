@@ -4,7 +4,7 @@
 
     <groupId>cern.accsoft.cals.kafka_perf</groupId>
     <artifactId>kafka_perf_test</artifactId>
-    <version>0.1</version>
+    <version>0.2</version>
     <packaging>jar</packaging>
 
     <name>kafka_perf_test</name>

@@ -36,7 +36,7 @@ zookeeper_dir = '{}/zookeeper/latest'.format(base_app_dir)
 bench_dir = '{0}/bench'.format(base_app_dir)
 python_sources_dir = '{0}/src/main/python'.format(bench_dir)
 
-test_worker_jar = '{}/target/kafka_perf_test-0.1-jar-with-dependencies.jar'.format(bench_dir)
+test_worker_jar = '{}/target/kafka_perf_test-0.2-jar-with-dependencies.jar'.format(bench_dir)
 
 remote_log_directory = '/var/log/kafka_perf'
 coordinator_log_path = './coordinator.out' # this file is stored remotelly, and then copied somewhere under local log dir
