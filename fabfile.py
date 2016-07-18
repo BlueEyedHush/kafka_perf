@@ -97,9 +97,9 @@ def emergency_log_copy():
         host_log_dir = get_and_ensure_existence_of_emergency_logdir_for(host)
         download_file(host, coordinator_log_path, host_log_dir)
 
-    for host in h('zk'):
-        host_log_dir = get_and_ensure_existence_of_emergency_logdir_for(host)
-        download_file(host, zookeeper_log_file, host_log_dir)
+    # for host in h('zk'):
+    #     host_log_dir = get_and_ensure_existence_of_emergency_logdir_for(host)
+    #     download_file(host, zookeeper_log_file, host_log_dir)
 
     for host in h('kafka'):
         host_log_dir = get_and_ensure_existence_of_emergency_logdir_for(host)
@@ -149,8 +149,9 @@ def restart_benchmark_daemons(threads):
 @roles('zk')
 def ensure_zk_running():
     zk_server_script_path = '{}/bin/zkServer.sh'.format(zookeeper_dir)
-    coord_log('ensuring that zk is running & truncating log')
-    run('echo ----trunc---- > {}'.format(zookeeper_log_file))
+    coord_log('ensuring that zk is running')
+    # coord_log('ensuring that zk is running & truncating log')
+    # run('echo ----trunc---- > {}'.format(zookeeper_log_file))
     run_with_logging('export ZOO_LOG_DIR={0} && export JMXPORT={1} && {2} start'
                      .format(remote_log_directory, zk_jmx_port, zk_server_script_path))
     coord_log('zk should be running')
@@ -284,9 +285,9 @@ def run_test_suite(suite_log_dir=None,topics='[1]', series=1, duration=60.0, mes
                 set_name = 't{}_{}'.format(str(topic_progression[i]), str(j))
                 execute(run_test_set, suite_log_dir, set_name, duration, message_size, topic_progression[i])
 
-        for host in h('zk'):
-            local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
-            download_file(host, zookeeper_log_file, local_dir)
+        # for host in h('zk'):
+        #     local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
+        #     download_file(host, zookeeper_log_file, local_dir)
 
         for host in h('all'):
             local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
