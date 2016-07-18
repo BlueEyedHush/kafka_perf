@@ -260,6 +260,12 @@ def run_test_set(suite_log_dir, set_name, duration, message_size, topics):
 
     execute(log_test_set_execution_end, set_name)
 
+def get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host):
+    dir = '{}/persuite/{}'.format(suite_log_dir, host)
+    local('mkdir -p {}'.format(dir))
+    return dir
+
+
 @task
 @runs_once
 def run_test_suite(suite_log_dir=None,topics='[1]', series=1, duration=60.0, message_size=500, threads=3):
@@ -279,14 +285,15 @@ def run_test_suite(suite_log_dir=None,topics='[1]', series=1, duration=60.0, mes
                 execute(run_test_set, suite_log_dir, set_name, duration, message_size, topic_progression[i])
 
         for host in h('zk'):
-            local_dir = '{}/persuite/{}'.format(suite_log_dir, host)
-            local('mkdir -p {}'.format(local_dir))
+            local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
             download_file(host, zookeeper_log_file, local_dir)
+
+        for host in h('all'):
+            local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
             download_file(host, coordinator_log_path, local_dir)
 
         for host in h('prod'):
-            local_dir = '{}/persuite/{}'.format(local_log_directory, suite_log_dir, host)
-            local('mkdir -p {}'.format(local_dir))
+            local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
             download_file(host, bench_service_log_path, local_dir)
 
         #analyze data
