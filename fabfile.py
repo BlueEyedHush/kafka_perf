@@ -29,20 +29,20 @@ local_log_directory = './logs' # downloaded logs and results are stored there
 emergency_local_log_directory = '{}/emergency'.format(local_log_directory) # in case of serious failure during
                                                                            # execution logs will be copied here
 # paths on remote machine
-base_app_dir = '/opt/kafka_perf'
-base_data_dir = '/mnt/vol1'
+bench_dir = '/opt/kafka_perf/bench'
+bundle_dir = '/data1/cals/kafka_perf/bundle'
+data_dir = '/data1/cals/kafka_perf/data'
 
-kafka_dir = '{0}/kafka/latest'.format(base_app_dir)
-kafka_data_dir = '{0}/kf'.format(base_data_dir)
+kafka_dir = '{}/kafka/latest'.format(bundle_dir)
+zookeeper_dir = '{}/zookeeper/latest'.format(bundle_dir)
+kafka_data_dir = '{}/kf'.format(data_dir)
 
-zookeeper_dir = '{}/zookeeper/latest'.format(base_app_dir)
-
-bench_dir = '{0}/bench'.format(base_app_dir)
-python_sources_dir = '{0}/src/main/python'.format(bench_dir)
+python_sources_dir = '{}/src/main/python'.format(bench_dir)
 test_worker_jar = '{}/target/kafka_perf_test-0.2-jar-with-dependencies.jar'.format(bench_dir)
 
-remote_log_directory = '/var/log/kafka_perf'
-coordinator_log_path = './coordinator.out' # this file is stored remotelly, and then copied somewhere under local log dir
+remote_log_directory = '~/log/kafka_perf'
+coordinator_log_path = '{}/coordinator.out'.format(remote_log_directory) # this file is stored remotelly,
+                                                                    # and then copied somewhere under local log dir
 bench_service_log_path = '{}/bench.out'.format(remote_log_directory)
 zookeeper_log_file = '/var/log/zookeeper/zookeeper.out'
 kafka_log_file = '{}/logs/kafkaServer.out'.format(kafka_dir)
