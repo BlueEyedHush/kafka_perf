@@ -243,6 +243,10 @@ def run_test_set(suite_log_dir, set_name, duration, message_size, topics):
             except RemoteException:
                 pass # succeed is already false
 
+    for host in h('kafka'):
+        current_log_dir = "{}/{}/{}".format(suite_log_dir, set_name, host)
+        local('mkdir -p {}'.format(current_log_dir))
+
         download_file(host, kafka_log_file, current_log_dir)
 
     execute(log_test_set_execution_end, set_name)
