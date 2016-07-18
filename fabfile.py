@@ -87,17 +87,26 @@ def download_file_error(host, from_path, to_path):
 def download_file(host, from_path, to_path):
     os.system('scp {}:{} {} || true'.format(host, from_path, to_path))
 
+def get_and_ensure_existence_of_emergency_logdir_for(host):
+    host_log_dir = '{}/{}'.format(emergency_local_log_directory, host)
+    os.system('mkdir -p {}'.format(host_log_dir))
+    return host_log_dir
+
 def emergency_log_copy():
-    for host in h('zk'):
-        host_log_dir = '{}/{}'.format(emergency_local_log_directory, host)
-        os.system('mkdir -p {}'.format(host_log_dir))
-        download_file(host, zookeeper_log_file, host_log_dir)
+    for host in h('all'):
+        host_log_dir = get_and_ensure_existence_of_emergency_logdir_for(host)
         download_file(host, coordinator_log_path, host_log_dir)
+
+    for host in h('zk'):
+        host_log_dir = get_and_ensure_existence_of_emergency_logdir_for(host)
+        download_file(host, zookeeper_log_file, host_log_dir)
+
+    for host in h('kafka'):
+        host_log_dir = get_and_ensure_existence_of_emergency_logdir_for(host)
         download_file(host, kafka_log_file, host_log_dir)
 
     for host in h('prod'):
-        host_log_dir = '{}/{}'.format(emergency_local_log_directory, host)
-        os.system('mkdir -p {}'.format(host_log_dir))
+        host_log_dir = get_and_ensure_existence_of_emergency_logdir_for(host)
         download_file(host, bench_service_log_path, host_log_dir)
 
 def h(name):
