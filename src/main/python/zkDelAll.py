@@ -1,6 +1,6 @@
 from kazoo.client import KazooClient
 
-host = 'localhost:2181'
+host = 'itrac1512.cern.ch:2181'
 
 root = '/'
 
