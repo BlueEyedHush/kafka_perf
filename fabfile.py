@@ -21,10 +21,14 @@ class RemoteException(Exception):
     pass
 env.abort_exception = RemoteException
 
+# paths on local machine
 local_python_dir='./src/main/python'
 orchestrator_script_path='{}/orchestrator.py'.format(local_python_dir)
 analyzer_script_path = '{}/analyzer.py'.format(local_python_dir)
-
+local_log_directory = './logs' # downloaded logs and results are stored there
+emergency_local_log_directory = '{}/emergency'.format(local_log_directory) # in case of serious failure during
+                                                                           # execution logs will be copied here
+# paths on remote machine
 base_app_dir = '/opt/kafka_perf'
 base_data_dir = '/mnt/vol1'
 
@@ -35,18 +39,24 @@ zookeeper_dir = '{}/zookeeper/latest'.format(base_app_dir)
 
 bench_dir = '{0}/bench'.format(base_app_dir)
 python_sources_dir = '{0}/src/main/python'.format(bench_dir)
-
 test_worker_jar = '{}/target/kafka_perf_test-0.2-jar-with-dependencies.jar'.format(bench_dir)
 
 remote_log_directory = '/var/log/kafka_perf'
 coordinator_log_path = './coordinator.out' # this file is stored remotelly, and then copied somewhere under local log dir
 bench_service_log_path = '{}/bench.out'.format(remote_log_directory)
-local_log_directory = './logs'
-emergency_local_log_directory = '{}/emergency'.format(local_log_directory)
-
 zookeeper_log_file = '/var/log/zookeeper/zookeeper.out'
 kafka_log_file = '{}/logs/kafkaServer.out'.format(kafka_dir)
 results_file_path = '/tmp/results'
+
+# groups of hosts
+env.roledefs = {
+    'all': ['128.142.128.88','128.142.134.233','188.184.165.208','128.142.242.119','128.142.134.55'],
+    'kafka': ['128.142.128.88','128.142.134.233'],
+    'zk': ['128.142.128.88','128.142.134.233','188.184.165.208'],
+    'prod': ['188.184.165.208','128.142.242.119','128.142.134.55'],
+    'zk_operator': ['188.184.165.208'], # node from which all commands to zk will be issued
+    'prod_chosen': ['128.142.134.55'] # single node from prod group
+}
 
 def coord_log(msg):
     run('echo "[`date`]: {0}" >> {1}'.format(msg, coordinator_log_path))
@@ -74,16 +84,6 @@ def emergency_log_copy():
         os.system('mkdir -p {}'.format(host_log_dir))
         download_file(host, bench_service_log_path, host_log_dir)
 
-
-env.roledefs = {
-    'all': ['128.142.128.88','128.142.134.233','188.184.165.208','128.142.242.119','128.142.134.55'],
-    'kafka': ['128.142.128.88','128.142.134.233'],
-    'zk': ['128.142.128.88','128.142.134.233','188.184.165.208'],
-    'prod': ['188.184.165.208','128.142.242.119','128.142.134.55'],
-    'zk_operator': ['188.184.165.208'], # node from which all commands to zk will be issued
-    'prod_chosen': ['128.142.134.55'] # single node from prod group
-}
-
 def h(name):
     return env.roledefs[name]
 
@@ -101,9 +101,6 @@ def init():
     coord_log('creating local ({}) and remote ({}) log directories'.format(local_log_directory, remote_log_directory))
     run_with_logging('rm -rf {}'.format(remote_log_directory))
     run_with_logging('mkdir -p {0}'.format(remote_log_directory))
-    # run_with_logging('TMP_DIR=`mktemp -d` && '
-    #     'mv {0}/* ${{TMP_DIR}} && '
-    #     'echo "previous contents of log dir moved to ${{TMP_DIR}}"'.format(remote_log_directory))
     local('mkdir -p {}'.format(local_log_directory))
     coord_log('log directory created')
 
