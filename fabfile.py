@@ -44,7 +44,7 @@ remote_log_directory = '~/log/kafka_perf'
 coordinator_log_path = '{}/coordinator.out'.format(remote_log_directory) # this file is stored remotelly,
                                                                     # and then copied somewhere under local log dir
 bench_service_log_path = '{}/bench.out'.format(remote_log_directory)
-zookeeper_log_file = '/var/log/zookeeper/zookeeper.out'
+zookeeper_log_file = '{}/zookeeper.out'
 kafka_log_file = '{}/logs/kafkaServer.out'.format(kafka_dir)
 results_file_path = '/tmp/results'
 
