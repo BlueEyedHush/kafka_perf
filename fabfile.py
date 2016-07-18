@@ -44,7 +44,7 @@ remote_log_directory = '~/log/kafka_perf'
 coordinator_log_path = '{}/coordinator.out'.format(remote_log_directory) # this file is stored remotelly,
                                                                     # and then copied somewhere under local log dir
 bench_service_log_path = '{}/bench.out'.format(remote_log_directory)
-zookeeper_log_file = '{}/zookeeper.out'
+zookeeper_log_file = '{}/zookeeper.out'.format(remote_log_directory)
 kafka_log_file = '{}/logs/kafkaServer.out'.format(kafka_dir)
 results_file_path = '/tmp/results'
 
@@ -69,7 +69,7 @@ env.roledefs = {
     'all': a.values(),
     'kafka': [a['i9'], a['i10']],
     'zk': [a['i12']],
-    'prod': [a['o1'], a['o2'], a['o3']],
+    'prod': [a['o1'], a['o2'], a['o3'], a['o4'], a['o5'], a['o6'], a['o7'], a['o8']],
     'zk_operator': [a['o8']], # node from which all commands to zk will be issued
     'prod_chosen': [a['o1']] # single node from prod group
 }
@@ -195,7 +195,7 @@ def create_topics(number_of_topics):
 
 @task
 @parallel
-@roles('all')
+@roles('prod')
 def log_actual_testing_started():
     coord_log('actual testing started')
 
