@@ -218,7 +218,7 @@ def log_test_set_execution_end(set_name):
     coord_log('test set {} finished'.format(set_name))
 
 @task
-def run_test_set(suite_name, set_name, duration, message_size, topics):
+def run_test_set(suite_log_dir, set_name, duration, message_size, topics):
     execute(log_test_set_execution_start, set_name, duration, message_size, topics)
 
     execute(stop_kafka)
@@ -232,7 +232,7 @@ def run_test_set(suite_name, set_name, duration, message_size, topics):
     execute(run_test, duration, message_size, topics)
 
     for host in h('prod'):
-        current_log_dir = "{}/{}/{}/{}".format(local_log_directory, suite_name, set_name, host)
+        current_log_dir = "{}/{}/{}".format(suite_log_dir, set_name, host)
         local('mkdir -p {}'.format(current_log_dir))
 
         succeeded = False
@@ -249,9 +249,9 @@ def run_test_set(suite_name, set_name, duration, message_size, topics):
 
 @task
 @runs_once
-def run_test_suite(topics='[1]', series=1, duration=60.0, message_size=500, threads=3):
-    suite_name = datetime.datetime.now().strftime('%d%m%y_%H%M')
-    suite_log_dir = "{}/{}".format(local_log_directory, suite_name)
+def run_test_suite(suite_log_dir=None,topics='[1]', series=1, duration=60.0, message_size=500, threads=3):
+    suite_log_dir = suite_log_dir if suite_log_dir is not None \
+        else "{}/{}".format(local_log_directory, datetime.datetime.now().strftime('%d%m%y_%H%M'))
     local('mkdir -p {}'.format(suite_log_dir))
 
     try:
@@ -263,24 +263,23 @@ def run_test_suite(topics='[1]', series=1, duration=60.0, message_size=500, thre
         for i in range(0, len(topic_progression)):
             for j in range(0, int(series)):
                 set_name = 't{}_{}'.format(str(topic_progression[i]), str(j))
-                execute(run_test_set, suite_name, set_name, duration, message_size, topic_progression[i])
+                execute(run_test_set, suite_log_dir, set_name, duration, message_size, topic_progression[i])
 
         for host in h('zk'):
-            local_dir = '{}/{}/persuite/{}'.format(local_log_directory, suite_name, host)
+            local_dir = '{}/persuite/{}'.format(suite_log_dir, host)
             local('mkdir -p {}'.format(local_dir))
             download_file(host, zookeeper_log_file, local_dir)
             download_file(host, coordinator_log_path, local_dir)
 
         for host in h('prod'):
-            local_dir = '{}/{}/persuite/{}'.format(local_log_directory, suite_name, host)
+            local_dir = '{}/persuite/{}'.format(local_log_directory, suite_log_dir, host)
             local('mkdir -p {}'.format(local_dir))
             download_file(host, bench_service_log_path, local_dir)
 
         #analyze data
-        suite_root = '{}/{}'.format(local_log_directory, suite_name)
-        analysis_results_out_path = '{}/collective_results'.format(suite_root)
+        analysis_results_out_path = '{}/collective_results'.format(suite_log_dir)
         local('python {} {} {} {} {} {} {} > {}'.format(analyzer_script_path,
-                                                        suite_root,
+                                                        suite_log_dir,
                                                         topics,
                                                         series,
                                                         message_size,
