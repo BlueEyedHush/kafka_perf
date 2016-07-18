@@ -48,14 +48,30 @@ zookeeper_log_file = '/var/log/zookeeper/zookeeper.out'
 kafka_log_file = '{}/logs/kafkaServer.out'.format(kafka_dir)
 results_file_path = '/tmp/results'
 
+# aliases
+a = {
+    'i9': 'itrac1509',
+    'i10': 'itrac1510',
+    'i11': 'itrac1511',
+    'i12': 'itrac1512',
+    'o1': 'cals-kafka-perf-bf4cbe5f-709f-4158-b1de-f49e3d0dfeef',
+    'o2': 'cals-kafka-perf-df4766f8-d34a-406c-b751-8372efcdde22',
+    'o3': 'cals-kafka-perf-9eb4ca80-8369-496f-b455-9c25d6ad4a8b',
+    'o4': 'cals-kafka-perf-bbcc82bc-1943-4297-bb48-d6b536ad83e4',
+    'o5': 'cals-kafka-perf-f61d20da-c57c-4536-87f5-330b2ded8b74',
+    'o6': 'cals-kafka-perf-a6fd3630-4503-474a-a11c-f968f6d70f03',
+    'o7': 'cals-kafka-perf-4dc7e768-ccce-4f6e-9c6f-eccc6082ee2c',
+    'o8': 'cals-kafka-perf-0903fdc7-1269-4e9f-8edc-1f526b42da04',
+}
+
 # groups of hosts
 env.roledefs = {
-    'all': ['128.142.128.88','128.142.134.233','188.184.165.208','128.142.242.119','128.142.134.55'],
-    'kafka': ['128.142.128.88','128.142.134.233'],
-    'zk': ['128.142.128.88','128.142.134.233','188.184.165.208'],
-    'prod': ['188.184.165.208','128.142.242.119','128.142.134.55'],
-    'zk_operator': ['188.184.165.208'], # node from which all commands to zk will be issued
-    'prod_chosen': ['128.142.134.55'] # single node from prod group
+    'all': a.values(),
+    'kafka': [a['i9'], a['i10']],
+    'zk': [a['i12']],
+    'prod': [a['o1'], a['o2'], a['o3']],
+    'zk_operator': [a['o8']], # node from which all commands to zk will be issued
+    'prod_chosen': [a['o1']] # single node from prod group
 }
 
 def coord_log(msg):
