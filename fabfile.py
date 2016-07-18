@@ -110,13 +110,10 @@ def run_daemonized(cmd, log_path):
     run('nohup {0} > {1} 2>&1 < /dev/null &'.format(cmd, log_path))
 
 @task
-@parallel
 @roles('all')
 def init():
-    run('echo LOG_START > {}'.format(coordinator_log_path))
-    coord_log('creating local ({}) and remote ({}) log directories'.format(local_log_directory, remote_log_directory))
-    run_with_logging('rm -rf {}'.format(remote_log_directory))
-    run_with_logging('mkdir -p {0}'.format(remote_log_directory))
+    run('mkdir -p {0}'.format(remote_log_directory))
+    run('echo ---------`date`--------- > {}'.format(coordinator_log_path))
     local('mkdir -p {}'.format(local_log_directory))
     coord_log('log directory created')
 
