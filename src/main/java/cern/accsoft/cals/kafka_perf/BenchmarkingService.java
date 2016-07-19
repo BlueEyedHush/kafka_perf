@@ -1,7 +1,7 @@
 package cern.accsoft.cals.kafka_perf;
 
 import cern.accsoft.cals.kafka_perf.message_suppliers.MessageSupplier;
-import cern.accsoft.cals.kafka_perf.message_suppliers.MultipleTopicFixedLenghtSupplier;
+import cern.accsoft.cals.kafka_perf.message_suppliers.SingleTopicFixedLengthSupplier;
 import org.apache.kafka.clients.producer.KafkaProducer;
 
 import java.util.concurrent.Semaphore;
@@ -35,7 +35,7 @@ public class BenchmarkingService implements Runnable {
      */
     public void startTest(int messageSize, int topicCount) {
         /* is this safe */
-        messageSupplier = new MultipleTopicFixedLenghtSupplier(messageSize, topicCount, partitionsPerTopic);
+        messageSupplier = new SingleTopicFixedLengthSupplier(messageSize, topicCount, partitionsPerTopic);
         messageCount = 0;
         semaphore.release();
     }
