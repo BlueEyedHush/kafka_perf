@@ -65,29 +65,29 @@ public class BenchmarkCoordinator {
     }
 
     private void eventReceived(CuratorFramework client, CuratorEvent event) throws Exception {
-        switch (event.getType()) {
-            case WATCHED:
-                String data = getTestNodeValueAndSetWatch(client);
-                if(data.equals(STOP_STRING)) {
-                    stopTest();
-                } else {
-                    final Matcher startMatcher = START_COMMAND_PATTERN.matcher(data);
-                    if(startMatcher.matches()) {
-                        final int messageSize = Integer.valueOf(startMatcher.group("msize"), 10);
-                        final int topicCount = Integer.valueOf(startMatcher.group("topics"), 10);
-
-                        startTest(messageSize, topicCount);
+        if(event.getPath() != null && event.getPath().startsWith(Config.TEST_ZNODE_PATH)) {
+            switch (event.getType()) {
+                case WATCHED:
+                    String data = getTestNodeValueAndSetWatch(client);
+                    if(data.equals(STOP_STRING)) {
+                        stopTest();
                     } else {
-                        LOGGER.error("Unrecognized contents of test node: {}", data);
+                        final Matcher startMatcher = START_COMMAND_PATTERN.matcher(data);
+                        if(startMatcher.matches()) {
+                            final int messageSize = Integer.valueOf(startMatcher.group("msize"), 10);
+                            final int topicCount = Integer.valueOf(startMatcher.group("topics"), 10);
+
+                            startTest(messageSize, topicCount);
+                        } else {
+                            LOGGER.error("Unrecognized contents of test node: {}", data);
+                        }
                     }
-                }
-                break;
-            default:
-                if(event.getPath() != null && event.getPath().startsWith(Config.TEST_ZNODE_PATH)) {
+                    break;
+                default:
                     /* event wasn't interesting, but we must set the watch */
                     setWatch(client);
-                }
-                LOGGER.info("Some uninteresting ZK event received: {}", event.toString());
+                    LOGGER.info("Some uninteresting ZK event received: {}", event.toString());
+            }
         }
     }
 
