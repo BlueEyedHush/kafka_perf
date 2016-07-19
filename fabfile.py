@@ -6,8 +6,6 @@
 import ast
 import datetime
 import os
-import random
-import string
 from fabric.api import *
 
 env.shell = "/bin/bash -c"
@@ -28,25 +26,31 @@ analyzer_script_path = '{}/analyzer.py'.format(local_python_dir)
 local_log_directory = './logs' # downloaded logs and results are stored there
 emergency_local_log_directory = '{}/emergency'.format(local_log_directory) # in case of serious failure during
                                                                            # execution logs will be copied here
-# paths on remote machine
-bench_dir = '/opt/kafka_perf/bench'
-bundle_dir = '/data1/cals/kafka_perf/bundle'
-data_dir = '/data1/cals/kafka_perf/data'
-
-kafka_dir = '{}/kafka/latest'.format(bundle_dir)
-zookeeper_dir = '{}/zookeeper/latest'.format(bundle_dir)
-kafka_data_dir = '{}/kf'.format(data_dir)
-
-python_sources_dir = '{}/src/main/python'.format(bench_dir)
-test_worker_jar = '{}/target/kafka_perf_test-0.2-jar-with-dependencies.jar'.format(bench_dir)
-
+# paths on remote machines (all)
 remote_log_directory = '~/log/kafka_perf'
 coordinator_log_path = '{}/coordinator.out'.format(remote_log_directory) # this file is stored remotelly,
                                                                     # and then copied somewhere under local log dir
 bench_service_log_path = '{}/bench.out'.format(remote_log_directory)
 zookeeper_log_file = '{}/zookeeper.out'.format(remote_log_directory)
-kafka_log_file = '{}/logs/kafkaServer.out'.format(kafka_dir)
+
 results_file_path = '/tmp/results'
+
+# paths on remote machines (itrac)
+bundle_dir = '/data1/cals/kafka_perf/bundle'
+data_dir = '/data1/cals/kafka_perf/data'
+kf_bench_dir = '/data1/cals/kafka_perf/bench'
+
+kafka_dir = '{}/kafka/latest'.format(bundle_dir)
+zookeeper_dir = '{}/zookeeper/latest'.format(bundle_dir)
+kafka_data_dir = '{}/kf'.format(data_dir)
+
+kafka_log_file = '{}/logs/kafkaServer.out'.format(kafka_dir)
+
+# paths on remote machines (openstack)
+bench_dir = '/opt/kafka_perf/bench'
+
+python_sources_dir = '{}/src/main/python'.format(bench_dir)
+test_worker_jar = '{}/target/kafka_perf_test-0.2-jar-with-dependencies.jar'.format(bench_dir)
 
 # aliases
 a = {
@@ -70,16 +74,13 @@ env.roledefs = {
     'kafka': [a['i9'], a['i10']],
     'zk': [a['i12']],
     'prod': [a['o1'], a['o2'], a['o3'], a['o4'], a['o5'], a['o6'], a['o7'], a['o8']],
-    'zk_operator': [a['i12']], # node from which all commands to zk will be issued
+    'zk_operator': [a['o8']], # node from which all commands to zk will be issued
     'prod_chosen': [a['o1']] # single node from prod group
 }
 
 def coord_log(msg):
     run('echo "[`date`]: {0}" >> {1}'.format(msg, coordinator_log_path))
     print msg
-
-def get_random_string(length):
-    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
 
 def download_file_error(host, from_path, to_path):
     os.system('scp {}:{} {}'.format(host, from_path, to_path))
@@ -160,7 +161,7 @@ def ensure_zk_running():
 @roles('zk_operator')
 def purge_zookeeper():
     purge_script_path = '{0}/zkDelAll.py'.format(python_sources_dir)
-    coord_log('removing all znodes except /zookeeper and /kafka_perf_test')
+    coord_log('removing all znodes except /zookeeper')
     run_with_logging('python -u {0} /'''.format(purge_script_path))
     coord_log('purging complete')
 
