@@ -16,7 +16,7 @@ def main(args):
     register_emergency_signal_handler(zk)
 
     try:
-        zk.retry(zk.create(path=test_znode, makepath=True))
+        zk.retry(lambda: zk.create(path=test_znode, makepath=True))
     except NodeExistsError:
         logging.info('{} already exists, no need to create'.format(test_znode))
 
