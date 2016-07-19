@@ -50,18 +50,18 @@ results_file_path = '/tmp/results'
 
 # aliases
 a = {
-    'i9': 'itrac1509',
-    'i10': 'itrac1510',
-    'i11': 'itrac1511',
-    'i12': 'itrac1512',
-    'o1': 'cals-kafka-perf-bf4cbe5f-709f-4158-b1de-f49e3d0dfeef',
-    'o2': 'cals-kafka-perf-df4766f8-d34a-406c-b751-8372efcdde22',
-    'o3': 'cals-kafka-perf-9eb4ca80-8369-496f-b455-9c25d6ad4a8b',
-    'o4': 'cals-kafka-perf-bbcc82bc-1943-4297-bb48-d6b536ad83e4',
-    'o5': 'cals-kafka-perf-f61d20da-c57c-4536-87f5-330b2ded8b74',
-    'o6': 'cals-kafka-perf-a6fd3630-4503-474a-a11c-f968f6d70f03',
-    'o7': 'cals-kafka-perf-4dc7e768-ccce-4f6e-9c6f-eccc6082ee2c',
-    'o8': 'cals-kafka-perf-0903fdc7-1269-4e9f-8edc-1f526b42da04',
+    'i9': 'itrac1509.cern.ch',
+    'i10': 'itrac1510.cern.ch',
+    'i11': 'itrac1511.cern.ch',
+    'i12': 'itrac1512.cern.ch',
+    'o1': 'cals-kafka-perf-bf4cbe5f-709f-4158-b1de-f49e3d0dfeef.cern.ch',
+    'o2': 'cals-kafka-perf-df4766f8-d34a-406c-b751-8372efcdde22.cern.ch',
+    'o3': 'cals-kafka-perf-9eb4ca80-8369-496f-b455-9c25d6ad4a8b.cern.ch',
+    'o4': 'cals-kafka-perf-bbcc82bc-1943-4297-bb48-d6b536ad83e4.cern.ch',
+    'o5': 'cals-kafka-perf-f61d20da-c57c-4536-87f5-330b2ded8b74.cern.ch',
+    'o6': 'cals-kafka-perf-a6fd3630-4503-474a-a11c-f968f6d70f03.cern.ch',
+    'o7': 'cals-kafka-perf-4dc7e768-ccce-4f6e-9c6f-eccc6082ee2c.cern.ch',
+    'o8': 'cals-kafka-perf-0903fdc7-1269-4e9f-8edc-1f526b42da04.cern.ch',
 }
 
 # groups of hosts
@@ -70,7 +70,7 @@ env.roledefs = {
     'kafka': [a['i9'], a['i10']],
     'zk': [a['i12']],
     'prod': [a['o1'], a['o2'], a['o3'], a['o4'], a['o5'], a['o6'], a['o7'], a['o8']],
-    'zk_operator': [a['o8']], # node from which all commands to zk will be issued
+    'zk_operator': [a['i12']], # node from which all commands to zk will be issued
     'prod_chosen': [a['o1']] # single node from prod group
 }
 
@@ -161,7 +161,7 @@ def ensure_zk_running():
 def purge_zookeeper():
     purge_script_path = '{0}/zkDelAll.py'.format(python_sources_dir)
     coord_log('removing all znodes except /zookeeper and /kafka_perf_test')
-    run_with_logging('python {0} /'''.format(purge_script_path))
+    run_with_logging('python -u {0} /'''.format(purge_script_path))
     coord_log('purging complete')
 
 @task
@@ -211,7 +211,7 @@ def log_actual_testing_started():
 
 def run_test(duration, message_size, topics):
     execute(log_actual_testing_started)
-    local('python {} -d {} -s {} -t {}'.format(orchestrator_script_path, duration, message_size, topics))
+    local('python -u {} -d {} -s {} -t {}'.format(orchestrator_script_path, duration, message_size, topics))
     local('sleep 5s')
 
 @task
