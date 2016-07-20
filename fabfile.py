@@ -237,6 +237,7 @@ def run_test_set(suite_log_dir, set_name, duration, message_size, topics):
     execute(remove_kafka_log)
     execute(purge_zookeeper)
     execute(ensure_kafka_running)
+    local('sleep 10') # give kafka cluster some time to initialize
     execute(remove_result_files)
     execute(create_topics, topics)
 
