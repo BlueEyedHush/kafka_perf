@@ -138,12 +138,12 @@ def stop_kafka():
 @task
 @parallel
 @roles('prod')
-def restart_benchmark_daemons(threads):
+def restart_benchmark_daemons(threads, sid):
     coord_log('stopping testing daemons')
     run_with_logging('''for pid in `ps aux | grep [k]afka_perf_test | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done''')
     run('mv {} /tmp || true'.format(bench_service_log_path))
     coord_log('starting testing daemons')
-    run_daemonized('java -jar {} -t {}'.format(test_worker_jar, threads), bench_service_log_path)
+    run_daemonized('java -jar {} -t {} -s {}'.format(test_worker_jar, threads, sid), bench_service_log_path)
 
 @task
 @parallel
@@ -271,7 +271,7 @@ def get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host):
 
 @task
 @runs_once
-def run_test_suite(suite_log_dir=None,topics='[1]', series=1, duration=60.0, message_size=500, threads=3):
+def run_test_suite(suite_log_dir=None,topics='[1]', series=1, duration=60.0, message_size=500, threads=3, sid="mtfl"):
     suite_log_dir = suite_log_dir if suite_log_dir is not None \
         else "{}/{}".format(local_log_directory, datetime.datetime.now().strftime('%d%m%y_%H%M'))
     local('mkdir -p {}'.format(suite_log_dir))
@@ -279,7 +279,7 @@ def run_test_suite(suite_log_dir=None,topics='[1]', series=1, duration=60.0, mes
     try:
         execute(init)
         execute(ensure_zk_running)
-        execute(restart_benchmark_daemons, threads)
+        execute(restart_benchmark_daemons, threads, sid)
 
         topic_progression = ast.literal_eval(topics)
         for i in range(0, len(topic_progression)):

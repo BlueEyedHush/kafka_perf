@@ -23,6 +23,7 @@ public class App {
     private static final String PARTITIONS_OPT = "partitions";
     private static final String TOPICS_OPT = "topics";
     private static final String TOPIC_CREATION_MODE_OPT = "tc_mode";
+    private static final String MESSAGE_SUPPLIER_ID_OPT = "m_sup";
 
     public static void main(String[] args) throws Exception {
         LOGGER.info("Application started");
@@ -39,6 +40,8 @@ public class App {
                                 "Number of paritions per topic"),
                         new FlaggedOption(TOPICS_OPT, JSAP.INTEGER_PARSER, "1", JSAP.NOT_REQUIRED, 'T', JSAP.NO_LONGFLAG,
                                 "Number of topics to which messages will be sent. Only relevant in topic creation mode."),
+                        new FlaggedOption(MESSAGE_SUPPLIER_ID_OPT, JSAP.STRING_PARSER, "mtfl", JSAP.NOT_REQUIRED, 's', JSAP.NO_LONGFLAG,
+                                "ID of message supplier to use"),
                         new Switch(TOPIC_CREATION_MODE_OPT, 'c', JSAP.NO_LONGFLAG,
                                 "Create required topics instead of benchmarking")
                 }
@@ -54,11 +57,13 @@ public class App {
         final int topics = config.getInt(TOPICS_OPT);
         final int threads = config.getInt(THREADS_OPT);
         final int partitions = config.getInt(PARTITIONS_OPT);
+        final String messageSupplierId = config.getString(MESSAGE_SUPPLIER_ID_OPT);
 
         if(!config.getBoolean(TOPIC_CREATION_MODE_OPT)) {
             List<BenchmarkingService> benchmarkingServiceList = new ArrayList<>(threads);
             for (int i = 0; i < threads; i++) {
-                BenchmarkingService service = BenchmarkingService.spawnAndStartBenchmarkingService(partitions);
+                BenchmarkingService service =
+                        BenchmarkingService.spawnAndStartBenchmarkingService(partitions, messageSupplierId);
                 benchmarkingServiceList.add(service);
             }
 
