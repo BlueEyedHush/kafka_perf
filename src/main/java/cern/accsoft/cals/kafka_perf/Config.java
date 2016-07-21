@@ -15,7 +15,7 @@ public class Config {
     static {
         Map<String, Object> m = new HashMap<>();
 
-        m.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "itrac1509.cern.ch:9092,itrac1510.cern.ch:9092");
+        m.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "itrac1509.cern.ch:9092,itrac1510.cern.ch:9092,itrac1511.cern.ch:9092");
         m.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
         m.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
 
