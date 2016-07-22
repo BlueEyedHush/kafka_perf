@@ -6,7 +6,7 @@ import time
 from kazoo.client import KazooClient
 from kazoo.exceptions import NodeExistsError
 
-zk_host='itrac1512:2181'
+zk_host='itrac1511:2181'
 test_znode = '/kafka_perf_test'
 
 def main(args):
