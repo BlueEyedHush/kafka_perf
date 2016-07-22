@@ -43,6 +43,7 @@ data_dir = '/data1/cals/kafka_perf/data'
 kf_bench_dir = '/data1/cals/kafka_perf/bench'
 
 kafka_dir = '{}/kafka/latest'.format(bundle_dir)
+kafka_topic_creation_script_path = '{}/bin/kafka-topics.sh'.format(kafka_dir)
 zookeeper_dir = '{}/zookeeper/latest'.format(bundle_dir)
 kafka_data_dir = '{}/kf'.format(data_dir)
 
@@ -77,7 +78,7 @@ env.roledefs = {
     'zk': [a['i12']],
     'prod': [a['o1'], a['o2'], a['o3'], a['o4'], a['o5'], a['o6'], a['o7'], a['o8']],
     'zk_operator': [a['o8']], # node from which all commands to zk will be issued
-    'prod_chosen': [a['o1']] # single node from prod group
+    'zk_chosen': [a['i12']]
 }
 
 def coord_log(msg):
@@ -200,11 +201,12 @@ def ensure_kafka_running():
     coord_log('kafka should be running')
 
 @task
-@roles('prod_chosen')
-def create_topics(number_of_topics):
-    coord_log('creating topics')
-    run_with_logging('java -jar {} -T {} -c'.format(test_worker_jar, number_of_topics))
-    coord_log('topics created')
+@roles('zk_chosen')
+def create_topic(partitions):
+    coord_log('creating topic')
+    run_with_logging('{} --zookeeper localhost:2181 --create --topic 0 --partitions {} --replication-factor 2'
+                     .format(kafka_topic_creation_script_path, partitions))
+    coord_log('topic created')
 
 @task
 @parallel
@@ -212,9 +214,9 @@ def create_topics(number_of_topics):
 def log_actual_testing_started():
     coord_log('actual testing started')
 
-def run_test(duration, message_size, topics):
+def run_test(duration, message_size, partitions):
     execute(log_actual_testing_started)
-    local('python -u {} -d {} -s {} -t {}'.format(orchestrator_script_path, duration, message_size, topics))
+    local('python -u {} -d {} -s {} -t 1 -p {}'.format(orchestrator_script_path, duration, message_size, partitions))
     local('sleep 5s')
 
 @task
@@ -231,7 +233,7 @@ def log_test_set_execution_end(set_name):
     coord_log('test set {} finished'.format(set_name))
 
 @task
-def run_test_set(suite_log_dir, set_name, duration, message_size, topics):
+def run_test_set(suite_log_dir, set_name, duration, message_size, partitions):
     execute(log_test_set_execution_start, set_name, duration, message_size, topics)
 
     execute(stop_kafka)
@@ -241,9 +243,9 @@ def run_test_set(suite_log_dir, set_name, duration, message_size, topics):
     execute(ensure_kafka_running)
     local('sleep 10') # give kafka cluster some time to initialize
     execute(remove_result_files)
-    execute(create_topics, topics)
+    execute(create_topic, partitions)
 
-    execute(run_test, duration, message_size, topics)
+    execute(run_test, duration, message_size, partitions)
 
     for host in h('prod'):
         current_log_dir = "{}/{}/{}".format(suite_log_dir, set_name, host)
@@ -273,7 +275,13 @@ def get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host):
 
 @task
 @runs_once
-def run_test_suite(suite_log_dir=None,topics='[1]', series=1, duration=60.0, message_size=500, threads=3, sid="mtfl"):
+def run_test_suite(suite_log_dir=None,
+                   partitions='[1]',
+                   series=1,
+                   duration=60.0,
+                   message_size=500,
+                   threads=3,
+                   sid="mtfl"):
     suite_log_dir = suite_log_dir if suite_log_dir is not None \
         else "{}/{}".format(local_log_directory, datetime.datetime.now().strftime('%d%m%y_%H%M'))
     local('mkdir -p {}'.format(suite_log_dir))
@@ -283,11 +291,11 @@ def run_test_suite(suite_log_dir=None,topics='[1]', series=1, duration=60.0, mes
         execute(ensure_zk_running)
         execute(restart_benchmark_daemons, threads, sid)
 
-        topic_progression = ast.literal_eval(topics)
-        for i in range(0, len(topic_progression)):
+        partitions = ast.literal_eval(partitions)
+        for p in partitions:
             for j in range(0, int(series)):
-                set_name = 't{}_{}'.format(str(topic_progression[i]), str(j))
-                execute(run_test_set, suite_log_dir, set_name, duration, message_size, topic_progression[i])
+                set_name = 't{}_{}'.format(str(p), str(j))
+                execute(run_test_set, suite_log_dir, set_name, duration, message_size, partitions)
 
         # for host in h('zk'):
         #     local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
