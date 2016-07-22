@@ -2,8 +2,6 @@ package cern.accsoft.cals.kafka_perf;
 
 import cern.accsoft.cals.kafka_perf.reporters.FileReporter;
 import com.martiansoftware.jsap.*;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,9 +18,6 @@ public class App {
     private static final Logger LOGGER = LoggerFactory.getLogger("main");
 
     private static final String THREADS_OPT = "threads";
-    private static final String PARTITIONS_OPT = "partitions";
-    private static final String TOPICS_OPT = "topics";
-    private static final String TOPIC_CREATION_MODE_OPT = "tc_mode";
     private static final String MESSAGE_SUPPLIER_ID_OPT = "m_sup";
 
     public static void main(String[] args) throws Exception {
@@ -35,15 +30,9 @@ public class App {
         SimpleJSAP jsap = new SimpleJSAP("Kafka testing daemon", "",
                 new Parameter[]{
                         new FlaggedOption(THREADS_OPT, JSAP.INTEGER_PARSER, "1", JSAP.NOT_REQUIRED, 't', JSAP.NO_LONGFLAG,
-                                "Number of threads sending messages"),
-                        new FlaggedOption(PARTITIONS_OPT, JSAP.INTEGER_PARSER, "2", JSAP.NOT_REQUIRED, 'p', JSAP.NO_LONGFLAG,
-                                "Number of paritions per topic"),
-                        new FlaggedOption(TOPICS_OPT, JSAP.INTEGER_PARSER, "1", JSAP.NOT_REQUIRED, 'T', JSAP.NO_LONGFLAG,
-                                "Number of topics to which messages will be sent. Only relevant in topic creation mode."),
+                                "Number of threads sending messages."),
                         new FlaggedOption(MESSAGE_SUPPLIER_ID_OPT, JSAP.STRING_PARSER, "mtfl", JSAP.NOT_REQUIRED, 's', JSAP.NO_LONGFLAG,
-                                "ID of message supplier to use"),
-                        new Switch(TOPIC_CREATION_MODE_OPT, 'c', JSAP.NO_LONGFLAG,
-                                "Create required topics instead of benchmarking")
+                                "ID of message supplier to use")
                 }
         );
 
@@ -54,30 +43,18 @@ public class App {
     }
 
     private void start(JSAPResult config) throws Exception { /* Exception from coordinator.run() */
-        final int topics = config.getInt(TOPICS_OPT);
         final int threads = config.getInt(THREADS_OPT);
-        final int partitions = config.getInt(PARTITIONS_OPT);
         final String messageSupplierId = config.getString(MESSAGE_SUPPLIER_ID_OPT);
 
-        if(!config.getBoolean(TOPIC_CREATION_MODE_OPT)) {
-            List<BenchmarkingService> benchmarkingServiceList = new ArrayList<>(threads);
-            for (int i = 0; i < threads; i++) {
-                BenchmarkingService service =
-                        BenchmarkingService.spawnAndStartBenchmarkingService(partitions, messageSupplierId);
-                benchmarkingServiceList.add(service);
-            }
-
-            FileReporter r = new FileReporter(Paths.get(RESULTS_FILE_PATH));
-            BenchmarkCoordinator coordinator = new BenchmarkCoordinator(benchmarkingServiceList, r);
-            coordinator.run();
-        } else {
-            try (KafkaProducer<byte[], byte[]> producer = new KafkaProducer<>(Config.KAFKA_CONFIGURATION)) {
-                byte[] content = {0,1,2};
-                for(int i = 0; i < topics; i++) {
-                    producer.send(new ProducerRecord<>(String.valueOf(i), content));
-                }
-            }
+        List<BenchmarkingService> benchmarkingServiceList = new ArrayList<>(threads);
+        for (int i = 0; i < threads; i++) {
+            BenchmarkingService service =
+                    BenchmarkingService.spawnAndStartBenchmarkingService(messageSupplierId);
+            benchmarkingServiceList.add(service);
         }
-    }
 
+        FileReporter r = new FileReporter(Paths.get(RESULTS_FILE_PATH));
+        BenchmarkCoordinator coordinator = new BenchmarkCoordinator(benchmarkingServiceList, r);
+        coordinator.run();
+    }
 }

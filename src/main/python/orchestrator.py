@@ -20,7 +20,7 @@ def main(args):
     except NodeExistsError:
         logging.info('{} already exists, no need to create'.format(test_znode))
 
-    start_command = 'start({},{})'.format(args.message_size, args.topics)
+    start_command = 'start({},{},{})'.format(args.message_size, args.topics, args.partitions)
     zk.retry(lambda: zk.set(test_znode, start_command))
 
     t_start = time.time() # in seconds
@@ -41,6 +41,8 @@ def get_cli_arguments():
                         help='size of messages sent to the broker (in bytes)')
     parser.add_argument('-t', dest='topics', action='store', default=1, required=False, type=int,
                         help='number of topics to which messages will be sent')
+    parser.add_argument('-p', dest='partitions', action='store', default=2, required=False, type=int,
+                        help='number of partitions in each topic')
 
     return parser.parse_args()
 

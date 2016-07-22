@@ -19,6 +19,8 @@ class RemoteException(Exception):
     pass
 env.abort_exception = RemoteException
 
+jar_name = 'kafka_perf_test-0.2-jar-with-dependencies.jar'
+
 # paths on local machine
 local_python_dir='./src/main/python'
 orchestrator_script_path='{}/orchestrator.py'.format(local_python_dir)
@@ -50,7 +52,7 @@ kafka_log_file = '{}/logs/kafkaServer.out'.format(kafka_dir)
 bench_dir = '/opt/kafka_perf/bench'
 
 python_sources_dir = '{}/src/main/python'.format(bench_dir)
-test_worker_jar = '{}/target/kafka_perf_test-0.2-jar-with-dependencies.jar'.format(bench_dir)
+test_worker_jar = '{}/target/{}'.format(bench_dir, jar_name)
 
 # aliases
 a = {

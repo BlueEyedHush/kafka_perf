@@ -19,7 +19,8 @@ import java.util.stream.Collectors;
 
 public class BenchmarkCoordinator {
     private static final Charset ZK_DATA_CHARSET = StandardCharsets.US_ASCII;
-    private static final Pattern START_COMMAND_PATTERN = Pattern.compile("start\\((?<msize>[0-9]+),(?<topics>[0-9]+)\\)");
+    private static final Pattern START_COMMAND_PATTERN =
+            Pattern.compile("start\\((?<msize>[0-9]+),(?<topics>[0-9]+),(?<partitions>[0-9]+)\\)");
     private static final String STOP_STRING = "stop";
     private static final byte[] STOP_STRING_BYTES = STOP_STRING.getBytes(ZK_DATA_CHARSET);
     private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkCoordinator.class);
@@ -76,8 +77,9 @@ public class BenchmarkCoordinator {
                         if(startMatcher.matches()) {
                             final int messageSize = Integer.valueOf(startMatcher.group("msize"), 10);
                             final int topicCount = Integer.valueOf(startMatcher.group("topics"), 10);
+                            final int parititonCount = Integer.valueOf(startMatcher.group("partitions"), 10);
 
-                            startTest(messageSize, topicCount);
+                            startTest(messageSize, topicCount, parititonCount);
                         } else {
                             LOGGER.error("Unrecognized contents of test node: {}", data);
                         }
@@ -96,12 +98,12 @@ public class BenchmarkCoordinator {
         terminationLatch.countDown();
     }
 
-    private void startTest(int messageSize, int topics) {
+    private void startTest(int messageSize, int topics, int partitions) {
         if(testIsRunning) throw new IllegalStateException("Test is already running!");
 
         testIsRunning = true;
 
-        services.forEach(s -> s.startTest(messageSize, topics));
+        services.forEach(s -> s.startTest(messageSize, topics, partitions));
         LOGGER.info("Test started with parameters: message_size={}, topics={}", messageSize, topics);
     }
 

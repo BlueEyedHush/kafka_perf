@@ -7,11 +7,10 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import java.util.concurrent.Semaphore;
 
 public class BenchmarkingService implements Runnable {
-    private final int partitionsPerTopic;
     private final String supplierId;
 
-    public static BenchmarkingService spawnAndStartBenchmarkingService(int partitionsPerTopic, String supplierId) {
-        BenchmarkingService bs = new BenchmarkingService(partitionsPerTopic, supplierId);
+    public static BenchmarkingService spawnAndStartBenchmarkingService(String supplierId) {
+        BenchmarkingService bs = new BenchmarkingService(supplierId);
 
         Thread t = new Thread(bs, "benchmarking_thread");
         t.setDaemon(true);
@@ -24,8 +23,7 @@ public class BenchmarkingService implements Runnable {
     private MessageSupplier messageSupplier;
     private volatile long messageCount = 0;
 
-    public BenchmarkingService(int partitionsPerTopic, String supplierId) {
-        this.partitionsPerTopic = partitionsPerTopic;
+    public BenchmarkingService(String supplierId) {
         this.supplierId = supplierId;
         semaphore = new Semaphore(1, true);
         semaphore.acquireUninterruptibly();
@@ -35,7 +33,7 @@ public class BenchmarkingService implements Runnable {
      * Called from another thread
      * Must be called pairwise with stop!
      */
-    public void startTest(int messageSize, int topicCount) {
+    public void startTest(int messageSize, int topicCount, int partitionsPerTopic) {
         /* is this safe */
         messageSupplier = MessageSupplierFactory.get(supplierId, messageSize, topicCount, partitionsPerTopic);
         messageCount = 0;
