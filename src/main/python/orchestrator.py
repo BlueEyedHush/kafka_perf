@@ -11,7 +11,7 @@ test_znode = '/kafka_perf_test'
 
 def main(args):
     zk = KazooClient(hosts=zk_host)
-    zk.start()
+    zk.retry(lambda: zk.start())
 
     register_emergency_signal_handler(zk)
 

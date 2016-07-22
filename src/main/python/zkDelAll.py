@@ -5,7 +5,7 @@ host = 'itrac1511.cern.ch:2181'
 root = '/'
 
 zk = KazooClient(hosts=host)
-zk.start()
+zk.retry(lambda: zk.start())
 
 root_children = zk.retry(lambda: zk.get_children(root))
 
