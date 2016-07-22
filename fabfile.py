@@ -222,9 +222,9 @@ def run_test(duration, message_size, partitions):
 @task
 @parallel
 @roles('all')
-def log_test_set_execution_start(set_name, duration, message_size, topics):
-    coord_log('starting test set {} (duration = {}, message_size = {}, topics = {})'
-              .format(set_name, duration, message_size, topics))
+def log_test_set_execution_start(set_name, duration, message_size, partitions):
+    coord_log('starting test set {} (duration = {}, message_size = {}, parititons = {})'
+              .format(set_name, duration, message_size, partitions))
 
 @task
 @parallel
@@ -234,7 +234,7 @@ def log_test_set_execution_end(set_name):
 
 @task
 def run_test_set(suite_log_dir, set_name, duration, message_size, partitions):
-    execute(log_test_set_execution_start, set_name, duration, message_size, topics)
+    execute(log_test_set_execution_start, set_name, duration, message_size, partitions)
 
     execute(stop_kafka)
     execute(cleanup_after_kafka)
@@ -295,7 +295,7 @@ def run_test_suite(suite_log_dir=None,
         for p in partitions:
             for j in range(0, int(series)):
                 set_name = 't{}_{}'.format(str(p), str(j))
-                execute(run_test_set, suite_log_dir, set_name, duration, message_size, partitions)
+                execute(run_test_set, suite_log_dir, set_name, duration, message_size, p)
 
         # for host in h('zk'):
         #     local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
