@@ -291,8 +291,8 @@ def run_test_suite(suite_log_dir=None,
         execute(ensure_zk_running)
         execute(restart_benchmark_daemons, threads, sid)
 
-        partitions = ast.literal_eval(partitions)
-        for p in partitions:
+        partitions_parsed = ast.literal_eval(partitions)
+        for p in partitions_parsed:
             for j in range(0, int(series)):
                 set_name = 't{}_{}'.format(str(p), str(j))
                 execute(run_test_set, suite_log_dir, set_name, duration, message_size, p)
@@ -313,7 +313,7 @@ def run_test_suite(suite_log_dir=None,
         analysis_results_out_path = '{}/collective_results'.format(suite_log_dir)
         local('python {} {} {} {} {} {} {} > {}'.format(analyzer_script_path,
                                                         suite_log_dir,
-                                                        topics,
+                                                        partitions,
                                                         series,
                                                         message_size,
                                                         duration,
