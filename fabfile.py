@@ -74,7 +74,7 @@ a = {
 # groups of hosts
 env.roledefs = {
     'all': a.values(),
-    'kafka': [a['i9'], a['i10']],
+    'kafka': [a['i10'], a['i11']],
     'zk': [a['i11']],
     'prod': [a['o1'], a['o2'], a['o3'], a['o4'], a['o5'], a['o6'], a['o7'], a['o8']],
     'zk_operator': [a['o8']], # node from which all commands to zk will be issued
