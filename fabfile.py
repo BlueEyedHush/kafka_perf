@@ -20,6 +20,7 @@ class RemoteException(Exception):
 env.abort_exception = RemoteException
 
 jar_name = 'kafka_perf_test-0.2-jar-with-dependencies.jar'
+kafka_heap = '-Xmx4G -Xms4G'
 
 # paths on local machine
 local_python_dir='./src/main/python'
@@ -196,8 +197,8 @@ def ensure_kafka_running():
     kafka_start_script_path = '{0}/bin/kafka-server-start.sh'.format(kafka_dir)
     kafka_config_path = '{0}/config/server.properties'.format(kafka_dir)
     coord_log('ensuring kafka is running')
-    run_with_logging('export JMX_PORT={0} && {1} -daemon {2}'
-                     .format(kafka_jmx_port, kafka_start_script_path, kafka_config_path))
+    run_with_logging('export JMX_PORT={} && export KAFKA_HEAP_OPTS={} && {} -daemon {}'
+                     .format(kafka_jmx_port, kafka_heap, kafka_start_script_path, kafka_config_path))
     coord_log('kafka should be running')
 
 @task
