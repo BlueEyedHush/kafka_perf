@@ -214,9 +214,9 @@ def create_topic(partitions):
 def log_actual_testing_started():
     coord_log('actual testing started')
 
-def run_test(duration, message_size, partitions):
+def run_test(duration, message_size, topics, partitions):
     execute(log_actual_testing_started)
-    local('python -u {} -d {} -s {} -t 1 -p {}'.format(orchestrator_script_path, duration, message_size, partitions))
+    local('python -u {} -d {} -s {} -t {} -p {}'.format(orchestrator_script_path, duration, message_size, topics, partitions))
     local('sleep 5s')
 
 @task
@@ -243,14 +243,14 @@ def restart_brokers(partitions):
     execute(create_topic, partitions)
 
 @task
-def run_test_set(suite_log_dir, set_name, duration, message_size, partitions, as_is):
+def run_test_set(suite_log_dir, set_name, duration, message_size, topics, partitions, as_is):
     execute(log_test_set_execution_start, set_name, duration, message_size, partitions)
 
     if(not as_is):
         restart_brokers(partitions)
 
     execute(remove_result_files)
-    execute(run_test, duration, message_size, partitions)
+    execute(run_test, duration, message_size, topics, partitions)
 
     for host in h('prod'):
         current_log_dir = "{}/{}/{}".format(suite_log_dir, set_name, host)
@@ -281,6 +281,7 @@ def get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host):
 @task
 @runs_once
 def run_test_suite(suite_log_dir=None,
+                   topics=1,
                    partitions='[1]',
                    series=1,
                    duration=60.0,
@@ -301,7 +302,7 @@ def run_test_suite(suite_log_dir=None,
         for p in partitions_parsed:
             for j in range(0, int(series)):
                 set_name = 't{}_{}'.format(str(p), str(j))
-                execute(run_test_set, suite_log_dir, set_name, duration, message_size, p, as_is)
+                execute(run_test_set, suite_log_dir, set_name, duration, message_size, topics, p, as_is)
 
         # for host in h('zk'):
         #     local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
