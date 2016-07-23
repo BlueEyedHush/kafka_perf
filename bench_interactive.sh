@@ -7,12 +7,6 @@ SUMMARY_FILE=$SUITE_DIR/summary.out
 
 mkdir -p $SUITE_DIR
 
-if [ $# -eq 2 ]; then
-    SEP=""
-else
-    SEP=","
-fi
-
 # arguments
 TASK_NAME=$1
 shift
@@ -25,8 +19,12 @@ fi
 
 for arg in $*; do
     COMMAS_ESCAPED=$(echo "$arg" | sed -e 's/,/\\,/g')
-    ARGS=$ARGS$SEP"$COMMAS_ESCAPED"
+    ARGS=$ARGS",$COMMAS_ESCAPED"
 done
+
+if [[ $ARGS = ,* ]]; then # if args start with comma, strip it
+    ARGS=${ARGS:1}
+fi
 
 echo -e "\n\n\n------------------- "`date`"------------------- \n\n\n" >> $SUMMARY_FILE
 export PYTHONUNBUFFERED=true
