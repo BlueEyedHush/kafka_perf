@@ -31,4 +31,4 @@ done
 echo -e "\n\n\n------------------- "`date`"------------------- \n\n\n" >> $SUMMARY_FILE
 export PYTHONUNBUFFERED=true
 FAB_ARGS=$TASK_NAME:"$ARGS"
-fab $FAB_ARGS 2>&1 | tee -a $SUMMARY_FILE
+fab -I $FAB_ARGS 2>&1 | tee -a $SUMMARY_FILE
