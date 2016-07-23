@@ -28,5 +28,11 @@ fi
 
 echo -e "\n\n\n------------------- "`date`"------------------- \n\n\n" >> $SUMMARY_FILE
 export PYTHONUNBUFFERED=true
-FAB_ARGS=$TASK_NAME:"$ARGS"
+
+if [[ -z $ARGS ]]; then
+    FAB_ARGS=$TASK_NAME
+else
+    FAB_ARGS=$TASK_NAME:"$ARGS"
+fi
+
 fab -I $FAB_ARGS 2>&1 | tee -a $SUMMARY_FILE
