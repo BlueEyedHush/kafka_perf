@@ -111,12 +111,18 @@ public class BenchmarkCoordinator {
         if(!testIsRunning) throw new IllegalStateException("Cannot stop test which is not running!");
 
         List<Long> results = services.stream()
-                .map(BenchmarkingService::getMessageCount) // side effect!
+                .map(BenchmarkingService::getResults)
                 .collect(Collectors.toList());
 
         reporter.report(results);
-
         services.forEach(BenchmarkingService::stop);
+
+        double lag = services.stream()
+                .mapToLong(BenchmarkingService::getLag)
+                .average().orElseGet(() -> -1.0);
+
+        LOGGER.info("LAG: " + lag);
+
         testIsRunning = false;
 
         LOGGER.info("Test stopped");
