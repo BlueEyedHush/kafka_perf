@@ -3,11 +3,13 @@ package cern.accsoft.cals.kafka_perf;
 import cern.accsoft.cals.kafka_perf.message_suppliers.MessageSupplier;
 import cern.accsoft.cals.kafka_perf.message_suppliers.MessageSupplierFactory;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Semaphore;
 
 public class BenchmarkingService implements Runnable {
-    private final String supplierId;
+    private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkingService.class.getSimpleName());
 
     public static BenchmarkingService spawnAndStartBenchmarkingService(String supplierId) {
         BenchmarkingService bs = new BenchmarkingService(supplierId);
@@ -19,6 +21,7 @@ public class BenchmarkingService implements Runnable {
         return bs;
     }
 
+    private final String supplierId;
     private Semaphore semaphore;
     private MessageSupplier messageSupplier;
     private volatile long messageCount = 0;
@@ -59,8 +62,13 @@ public class BenchmarkingService implements Runnable {
                  * and won't release it until time for a new session arrives */
                 semaphore.acquireUninterruptibly();
                 try {
-                    producer.send(messageSupplier.get());
-                    messageCount++;
+                    producer.send(messageSupplier.get(), (metadata, ex) -> {
+                        if(metadata != null) {
+                            messageCount++;
+                        } else {
+                            LOGGER.error("Message processing error: ", ex);
+                        }
+                    });
                 } finally {
                     semaphore.release();
                 }
