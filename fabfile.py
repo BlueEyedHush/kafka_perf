@@ -233,18 +233,23 @@ def log_test_set_execution_end(set_name):
     coord_log('test set {} finished'.format(set_name))
 
 @task
-def run_test_set(suite_log_dir, set_name, duration, message_size, partitions):
-    execute(log_test_set_execution_start, set_name, duration, message_size, partitions)
-
+def restart_brokers(partitions):
     execute(stop_kafka)
     execute(cleanup_after_kafka)
     execute(remove_kafka_log)
     execute(purge_zookeeper)
     execute(ensure_kafka_running)
     local('sleep 10') # give kafka cluster some time to initialize
-    execute(remove_result_files)
     execute(create_topic, partitions)
 
+@task
+def run_test_set(suite_log_dir, set_name, duration, message_size, partitions, as_is):
+    execute(log_test_set_execution_start, set_name, duration, message_size, partitions)
+
+    if(not as_is):
+        restart_brokers(partitions)
+
+    execute(remove_result_files)
     execute(run_test, duration, message_size, partitions)
 
     for host in h('prod'):
@@ -281,7 +286,8 @@ def run_test_suite(suite_log_dir=None,
                    duration=60.0,
                    message_size=500,
                    threads=3,
-                   sid="mtfl"):
+                   sid="mtfl",
+                   as_is=False):
     suite_log_dir = suite_log_dir if suite_log_dir is not None \
         else "{}/{}".format(local_log_directory, datetime.datetime.now().strftime('%d%m%y_%H%M'))
     local('mkdir -p {}'.format(suite_log_dir))
@@ -295,7 +301,7 @@ def run_test_suite(suite_log_dir=None,
         for p in partitions_parsed:
             for j in range(0, int(series)):
                 set_name = 't{}_{}'.format(str(p), str(j))
-                execute(run_test_set, suite_log_dir, set_name, duration, message_size, p)
+                execute(run_test_set, suite_log_dir, set_name, duration, message_size, p, as_is)
 
         # for host in h('zk'):
         #     local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
