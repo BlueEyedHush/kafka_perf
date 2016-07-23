@@ -8,6 +8,9 @@ SUMMARY_FILE=$SUITE_DIR/summary.out
 mkdir -p $SUITE_DIR
 
 # arguments
+TASK_NAME=$1
+shift
+
 ARGS="suite_log_dir=$SUITE_DIR"
 for arg in $*; do
     COMMAS_ESCAPED=$(echo "$arg" | sed -e 's/,/\\,/g')
@@ -16,4 +19,4 @@ done
 
 echo -e "\n\n\n------------------- "`date`"------------------- \n\n\n" >> $SUMMARY_FILE
 export PYTHONUNBUFFERED=true
-fab run_test_suite:"$ARGS" 2>&1 | tee -a $SUMMARY_FILE
+fab $TASK_NAME:"$ARGS" 2>&1 | tee -a $SUMMARY_FILE
