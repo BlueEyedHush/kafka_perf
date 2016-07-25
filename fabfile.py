@@ -40,13 +40,16 @@ results_file_path = '/tmp/results'
 
 # paths on remote machines (itrac)
 bundle_dir = '/data1/cals/kafka_perf/bundle'
-data_dir = '/data1/cals/kafka_perf/data'
 kf_bench_dir = '/data1/cals/kafka_perf/bench'
 
 kafka_dir = '{}/kafka/latest'.format(bundle_dir)
 kafka_topic_creation_script_path = '{}/bin/kafka-topics.sh'.format(kafka_dir)
 zookeeper_dir = '{}/zookeeper/latest'.format(bundle_dir)
-kafka_data_dir = '{}/kf'.format(data_dir)
+
+kafka_d_mount_point_prefix = '/data'
+kafka_d_first_mount_number = 1
+kafka_d_last_mount_number = 8
+kafka_data_dir_suffix = '/cals/kafka_perf/data/kf'
 
 kafka_log_file = '{}/logs/kafkaServer.out'.format(kafka_dir)
 
@@ -169,13 +172,21 @@ def purge_zookeeper():
     run_with_logging('python -u {0} /'''.format(purge_script_path))
     coord_log('purging complete')
 
+def foreach_mount_point(cmd):
+    run('for num in $(seq {} {}); do {} {}${{num}}{}; done'.format(
+            kafka_d_first_mount_number,
+            kafka_d_last_mount_number,
+            cmd,
+            kafka_d_mount_point_prefix,
+            kafka_data_dir_suffix))
+
 @task
 @parallel
 @roles('kafka')
 def cleanup_after_kafka():
     coord_log('emptying kafka log directories')
-    run_with_logging('rm -rf {0}'.format(kafka_data_dir))
-    run_with_logging('mkdir -p {0}'.format(kafka_data_dir))
+    foreach_mount_point('rm -rf')
+    foreach_mount_point('mkdir -p')
     coord_log('kafka log directories emptied')
 
 @task
