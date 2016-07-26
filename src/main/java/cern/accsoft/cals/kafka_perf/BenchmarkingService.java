@@ -12,9 +12,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public class BenchmarkingService implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkingService.class.getSimpleName());
     private static final long NOT_REPORTED = -1;
+    private static final int CONSIDER_PAUSE_EVERY_X_MESSAGES = 100;
 
-    public static BenchmarkingService spawnAndStartBenchmarkingService(String supplierId) {
-        BenchmarkingService bs = new BenchmarkingService(supplierId);
+    public static BenchmarkingService spawnAndStartBenchmarkingService(String supplierId, long messagesPerSecond) {
+        BenchmarkingService bs = new BenchmarkingService(supplierId, messagesPerSecond);
 
         Thread t = new Thread(bs, "benchmarking_thread");
         t.setDaemon(true);
@@ -28,11 +29,13 @@ public class BenchmarkingService implements Runnable {
     private MessageSupplier messageSupplier;
     private volatile long messageCount = 0;
 
+    private Throttler throttler;
     private volatile long startTimestamp;
     private AtomicLong endTimestamp;
 
-    public BenchmarkingService(String supplierId) {
+    public BenchmarkingService(String supplierId, long messagesPerSecond) {
         this.supplierId = supplierId;
+        this.throttler = new Throttler(messagesPerSecond);
         semaphore = new Semaphore(1, true);
         semaphore.acquireUninterruptibly();
     }
@@ -46,6 +49,7 @@ public class BenchmarkingService implements Runnable {
         messageSupplier = MessageSupplierFactory.get(supplierId, messageSize, topicCount, partitionsPerTopic);
         messageCount = 0;
         startTimestamp = System.currentTimeMillis();
+        throttler.reset();
         endTimestamp = new AtomicLong(NOT_REPORTED);
 
         semaphore.release();
@@ -74,17 +78,21 @@ public class BenchmarkingService implements Runnable {
                 /* while we are OK to test, semaphore is down - but when stop command arrives, other thread will still it
                  * and won't release it until time for a new session arrives */
                 try {
-                    producer.send(messageSupplier.get(), (metadata, ex) -> {
-                        if(metadata != null) {
-                            endTimestamp.compareAndSet(NOT_REPORTED, System.currentTimeMillis());
-                            messageCount++;
-                        } else {
-                            LOGGER.error("Message processing error: ", ex);
-                        }
-                    });
+                    for(int i = 0; i < CONSIDER_PAUSE_EVERY_X_MESSAGES; i++) {
+                        producer.send(messageSupplier.get(), (metadata, ex) -> {
+                            if(metadata != null) {
+                                endTimestamp.compareAndSet(NOT_REPORTED, System.currentTimeMillis());
+                                messageCount++;
+                                throttler.messageSent();
+                            } else {
+                                LOGGER.error("Message processing error: ", ex);
+                            }
+                        });
+                    }
                 } finally {
                     semaphore.release();
                 }
+                throttler.pauseIfNeeded();
             }
         }
     }

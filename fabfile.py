@@ -145,12 +145,12 @@ def stop_kafka():
 @task
 @parallel
 @roles('prod')
-def restart_benchmark_daemons(threads, sid):
+def restart_benchmark_daemons(threads, sid, throttle_at):
     coord_log('stopping testing daemons')
     run_with_logging('''for pid in `ps aux | grep [k]afka_perf_test | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done''')
     run('mv {} /tmp || true'.format(bench_service_log_path))
     coord_log('starting testing daemons')
-    run_daemonized('java -jar {} -t {} -s {}'.format(test_worker_jar, threads, sid), bench_service_log_path)
+    run_daemonized('java -jar {} -t {} -s {} -T {}'.format(test_worker_jar, threads, sid, throttle_at), bench_service_log_path)
 
 @task
 @parallel
@@ -300,7 +300,8 @@ def run_test_suite(suite_log_dir=None,
                    message_size=500,
                    threads=3,
                    sid="mtfl",
-                   as_is=False):
+                   as_is=False,
+                   throttle_at=-1):
     suite_log_dir = suite_log_dir if suite_log_dir is not None \
         else "{}/{}".format(local_log_directory, datetime.datetime.now().strftime('%d%m%y_%H%M'))
     local('mkdir -p {}'.format(suite_log_dir))
@@ -308,7 +309,7 @@ def run_test_suite(suite_log_dir=None,
     try:
         execute(init)
         execute(ensure_zk_running)
-        execute(restart_benchmark_daemons, threads, sid)
+        execute(restart_benchmark_daemons, threads, sid, throttle_at)
 
         partitions_parsed = ast.literal_eval(partitions)
         for p in partitions_parsed:

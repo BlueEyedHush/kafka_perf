@@ -19,6 +19,7 @@ public class App {
 
     private static final String THREADS_OPT = "threads";
     private static final String MESSAGE_SUPPLIER_ID_OPT = "m_sup";
+    private static final String THROTTLE_OPT = "throttle";
 
     public static void main(String[] args) throws Exception {
         LOGGER.info("Application started");
@@ -32,7 +33,14 @@ public class App {
                         new FlaggedOption(THREADS_OPT, JSAP.INTEGER_PARSER, "1", JSAP.NOT_REQUIRED, 't', JSAP.NO_LONGFLAG,
                                 "Number of threads sending messages."),
                         new FlaggedOption(MESSAGE_SUPPLIER_ID_OPT, JSAP.STRING_PARSER, "mtfl", JSAP.NOT_REQUIRED, 's', JSAP.NO_LONGFLAG,
-                                "ID of message supplier to use")
+                                "ID of message supplier to use"),
+                        new FlaggedOption(THROTTLE_OPT,
+                                JSAP.LONG_PARSER,
+                                Long.toString(Throttler.THROTTLING_DISABLED),
+                                JSAP.NOT_REQUIRED,
+                                'T',
+                                JSAP.NO_LONGFLAG,
+                                "throttle to ~ messages/second")
                 }
         );
 
@@ -45,11 +53,12 @@ public class App {
     private void start(JSAPResult config) throws Exception { /* Exception from coordinator.run() */
         final int threads = config.getInt(THREADS_OPT);
         final String messageSupplierId = config.getString(MESSAGE_SUPPLIER_ID_OPT);
+        final long messagesPerSecond = config.getShort(THROTTLE_OPT);
 
         List<BenchmarkingService> benchmarkingServiceList = new ArrayList<>(threads);
         for (int i = 0; i < threads; i++) {
             BenchmarkingService service =
-                    BenchmarkingService.spawnAndStartBenchmarkingService(messageSupplierId);
+                    BenchmarkingService.spawnAndStartBenchmarkingService(messageSupplierId, messagesPerSecond);
             benchmarkingServiceList.add(service);
         }
 
