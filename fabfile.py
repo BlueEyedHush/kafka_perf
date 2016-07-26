@@ -309,7 +309,7 @@ def run_test_suite(suite_log_dir=None,
     if throttle_at_throughput is None:
         throttle_at_messages = '-1'
     else:
-        throttle_at_messages = int(float(throttle_at_throughput)/(message_size*threads*len(h('prod'))))
+        throttle_at_messages = int(float(throttle_at_throughput)/(int(message_size)*int(threads)*len(h('prod'))))
 
     try:
         execute(init)
