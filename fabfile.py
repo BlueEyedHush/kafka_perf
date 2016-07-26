@@ -301,15 +301,20 @@ def run_test_suite(suite_log_dir=None,
                    threads=3,
                    sid="mtfl",
                    as_is=False,
-                   throttle_at=-1):
+                   throttle_at_throughput=None):
     suite_log_dir = suite_log_dir if suite_log_dir is not None \
         else "{}/{}".format(local_log_directory, datetime.datetime.now().strftime('%d%m%y_%H%M'))
     local('mkdir -p {}'.format(suite_log_dir))
 
+    if throttle_at_throughput is None:
+        throttle_at_messages = '-1'
+    else:
+        throttle_at_messages = int(float(throttle_at_throughput)/(message_size*threads*len(h('prod'))))
+
     try:
         execute(init)
         execute(ensure_zk_running)
-        execute(restart_benchmark_daemons, threads, sid, throttle_at)
+        execute(restart_benchmark_daemons, threads, sid, throttle_at_messages)
 
         partitions_parsed = ast.literal_eval(partitions)
         for p in partitions_parsed:
@@ -341,6 +346,3 @@ def run_test_suite(suite_log_dir=None,
                                                         analysis_results_out_path))
     finally:
         emergency_log_copy()
-
-
-
