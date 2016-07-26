@@ -17,9 +17,9 @@ zk_jmx_port=9091
 kafka_jmx_port=9093
 
 jmx_options='-Dcom.sun.management.jmxremote ' \
-            '-Dcom.sun.management.jmxremote.port={}' \
-            '-Dcom.sun.management.jmxremote.local.only=false' \
-            '-Dcom.sun.management.jmxremote.authenticate=false' \
+            '-Dcom.sun.management.jmxremote.port={} ' \
+            '-Dcom.sun.management.jmxremote.local.only=false ' \
+            '-Dcom.sun.management.jmxremote.authenticate=false ' \
             '-Dcom.sun.management.jmxremote.ssl=false'.format(client_jmx_port)
 
 class RemoteException(Exception):
