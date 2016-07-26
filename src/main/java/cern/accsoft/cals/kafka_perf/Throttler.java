@@ -23,15 +23,16 @@ class Throttler {
     public void pauseIfNeeded() {
         if(this.messagesPerSecond == THROTTLING_DISABLED) return;
 
-        long currentTime = System.currentTimeMillis();
-        boolean shouldPause = ((double) sentMessages)*1000/(currentTime - startTime) > messagesPerSecond;
-
-        if(shouldPause) {
+        while(shouldPause()) {
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    private boolean shouldPause() {
+        return ((double) sentMessages)*1000/(System.currentTimeMillis() - startTime) > messagesPerSecond;
     }
 }
