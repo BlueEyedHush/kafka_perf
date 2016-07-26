@@ -12,8 +12,15 @@ env.shell = "/bin/bash -c"
 env.always_use_pty = False
 env.use_ssh_config = True
 
+client_jmx_port=9091
 zk_jmx_port=9091
 kafka_jmx_port=9093
+
+jmx_options='-Dcom.sun.management.jmxremote ' \
+            '-Dcom.sun.management.jmxremote.port={}' \
+            '-Dcom.sun.management.jmxremote.local.only=false' \
+            '-Dcom.sun.management.jmxremote.authenticate=false' \
+            '-Dcom.sun.management.jmxremote.ssl=false'.format(client_jmx_port)
 
 class RemoteException(Exception):
     pass
@@ -150,7 +157,7 @@ def restart_benchmark_daemons(threads, sid, throttle_at):
     run_with_logging('''for pid in `ps aux | grep [k]afka_perf_test | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done''')
     run('mv {} /tmp || true'.format(bench_service_log_path))
     coord_log('starting testing daemons')
-    run_daemonized('java -jar {} -t {} -s {} -T {}'.format(test_worker_jar, threads, sid, throttle_at), bench_service_log_path)
+    run_daemonized('java {} -jar {} -t {} -s {} -T {}'.format(jmx_options, test_worker_jar, threads, sid, throttle_at), bench_service_log_path)
 
 @task
 @parallel
