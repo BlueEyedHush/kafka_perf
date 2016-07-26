@@ -53,7 +53,7 @@ public class App {
     private void start(JSAPResult config) throws Exception { /* Exception from coordinator.run() */
         final int threads = config.getInt(THREADS_OPT);
         final String messageSupplierId = config.getString(MESSAGE_SUPPLIER_ID_OPT);
-        final long messagesPerSecond = config.getShort(THROTTLE_OPT);
+        final long messagesPerSecond = config.getLong(THROTTLE_OPT);
 
         List<BenchmarkingService> benchmarkingServiceList = new ArrayList<>(threads);
         for (int i = 0; i < threads; i++) {
