@@ -90,13 +90,13 @@ public class BenchmarkingService implements Runnable {
                             }
                         });
                     }
+                } catch (TimeoutException | IllegalArgumentException e) {
+                    LOGGER.warn("Exception, retrying", e);
                 } finally {
                     semaphore.release();
                 }
                 throttler.pauseIfNeeded();
             }
-        } catch (TimeoutException e) {
-            LOGGER.warn("Producer threw TimeoutException, retrying", e);
         }
     }
 }
