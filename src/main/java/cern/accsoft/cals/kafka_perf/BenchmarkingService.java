@@ -3,6 +3,7 @@ package cern.accsoft.cals.kafka_perf;
 import cern.accsoft.cals.kafka_perf.message_suppliers.MessageSupplier;
 import cern.accsoft.cals.kafka_perf.message_suppliers.MessageSupplierFactory;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.common.errors.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,6 +95,8 @@ public class BenchmarkingService implements Runnable {
                 }
                 throttler.pauseIfNeeded();
             }
+        } catch (TimeoutException e) {
+            LOGGER.warn("Producer threw TimeoutException, retrying", e);
         }
     }
 }
