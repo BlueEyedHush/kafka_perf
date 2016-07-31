@@ -281,12 +281,12 @@ def run_test_set(suite_log_dir, set_name, duration, message_size, topics, partit
                 succeeded = True
             except RemoteException:
                 pass # succeed is already false
-
-    for host in h('kafka'):
-        current_log_dir = "{}/{}/{}".format(suite_log_dir, set_name, host)
-        local('mkdir -p {}'.format(current_log_dir))
-
-        download_file(host, kafka_log_file, current_log_dir)
+    #
+    # for host in h('kafka'):
+    #     current_log_dir = "{}/{}/{}".format(suite_log_dir, set_name, host)
+    #     local('mkdir -p {}'.format(current_log_dir))
+    #
+    #     download_file(host, kafka_log_file, current_log_dir)
 
     execute(log_test_set_execution_end, set_name)
 
@@ -332,13 +332,13 @@ def run_test_suite(suite_log_dir=None,
         #     local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
         #     download_file(host, zookeeper_log_file, local_dir)
 
-        for host in h('all'):
-            local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
-            download_file(host, coordinator_log_path, local_dir)
-
-        for host in h('prod'):
-            local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
-            download_file(host, bench_service_log_path, local_dir)
+        # for host in h('all'):
+        #     local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
+        #     download_file(host, coordinator_log_path, local_dir)
+        #
+        # for host in h('prod'):
+        #     local_dir = get_and_ensure_existence_of_persuite_log_dir_for(suite_log_dir, host)
+        #     download_file(host, bench_service_log_path, local_dir)
 
         #analyze data
         analysis_results_out_path = '{}/collective_results'.format(suite_log_dir)
@@ -351,4 +351,5 @@ def run_test_suite(suite_log_dir=None,
                                                         len(env.roledefs['prod']),
                                                         analysis_results_out_path))
     finally:
-        emergency_log_copy()
+        pass
+        # emergency_log_copy()
