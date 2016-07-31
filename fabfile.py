@@ -307,7 +307,8 @@ def run_test_suite(suite_log_dir=None,
                    threads=3,
                    sid="mtfl",
                    as_is=False,
-                   throttle_at_throughput=None):
+                   throttle_at_throughput=None,
+                   leave_daemons=False):
     suite_log_dir = suite_log_dir if suite_log_dir is not None \
         else "{}/{}".format(local_log_directory, datetime.datetime.now().strftime('%d%m%y_%H%M'))
     local('mkdir -p {}'.format(suite_log_dir))
@@ -320,7 +321,9 @@ def run_test_suite(suite_log_dir=None,
     try:
         execute(init)
         execute(ensure_zk_running)
-        execute(restart_benchmark_daemons, threads, sid, throttle_at_messages)
+        if(not leave_daemons):
+            execute(restart_benchmark_daemons, threads, sid, throttle_at_messages)
+            local('sleep 5s')
 
         partitions_parsed = ast.literal_eval(partitions)
         for p in partitions_parsed:
