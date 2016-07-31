@@ -93,8 +93,10 @@ env.roledefs = {
 }
 
 def coord_log(msg):
-    run('echo "[`date`]: {0}" >> {1}'.format(msg, coordinator_log_path))
-    print msg
+    #run('echo "[`date`]: {0}" >> {1}'.format(msg, coordinator_log_path))
+    current_time = datetime.datetime.now()
+    print '[{}] {}'.format(str(current_time), msg)
+
 
 def download_file_error(host, from_path, to_path):
     os.system('scp {}:{} {}'.format(host, from_path, to_path))
@@ -127,9 +129,6 @@ def emergency_log_copy():
 def h(name):
     return env.roledefs[name]
 
-def run_with_logging(command):
-    run('{} 2>&1 | tee -a {}'.format(command, coordinator_log_path))
-
 def run_daemonized(cmd, log_path):
     run('nohup {0} > {1} 2>&1 < /dev/null &'.format(cmd, log_path))
 
@@ -146,7 +145,7 @@ def init():
 @parallel
 def stop_kafka():
     coord_log('stopping kafka')
-    run_with_logging('''for pid in `ps aux | grep [k]afka.logs.dir | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done''')
+    run('''for pid in `ps aux | grep [k]afka.logs.dir | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done''')
     coord_log('kafka_stopped')
 
 @task
@@ -154,7 +153,7 @@ def stop_kafka():
 @roles('prod')
 def restart_benchmark_daemons(threads, sid, throttle_at):
     coord_log('stopping testing daemons')
-    run_with_logging('''for pid in `ps aux | grep [k]afka_perf_test | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done''')
+    run('''for pid in `ps aux | grep [k]afka_perf_test | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done''')
     run('mv {} /tmp || true'.format(bench_service_log_path))
     coord_log('starting testing daemons')
     run_daemonized('java {} -jar {} -t {} -s {} -T {}'.format(jmx_options, test_worker_jar, threads, sid, throttle_at), bench_service_log_path)
@@ -167,7 +166,7 @@ def ensure_zk_running():
     coord_log('ensuring that zk is running')
     # coord_log('ensuring that zk is running & truncating log')
     # run('echo ----trunc---- > {}'.format(zookeeper_log_file))
-    run_with_logging('export ZOO_LOG_DIR={0} && export JMXPORT={1} && {2} start'
+    run('export ZOO_LOG_DIR={0} && export JMXPORT={1} && {2} start'
                      .format(remote_log_directory, zk_jmx_port, zk_server_script_path))
     coord_log('zk should be running')
 
@@ -176,7 +175,7 @@ def ensure_zk_running():
 def purge_zookeeper():
     purge_script_path = '{0}/zkDelAll.py'.format(python_sources_dir)
     coord_log('removing all znodes except /zookeeper')
-    run_with_logging('python -u {0} /'''.format(purge_script_path))
+    run('python -u {0} /'''.format(purge_script_path))
     coord_log('purging complete')
 
 def foreach_mount_point(cmd):
@@ -200,13 +199,13 @@ def cleanup_after_kafka():
 @parallel
 @roles('kafka')
 def remove_kafka_log():
-    run_with_logging('rm -f {}'.format(kafka_log_file))
+    run('rm -f {}'.format(kafka_log_file))
 
 @task
 @parallel
 @roles('prod')
 def remove_result_files():
-    run_with_logging('rm -rf {}'.format(results_file_path))
+    run('rm -rf {}'.format(results_file_path))
 
 @task
 @parallel
@@ -215,7 +214,7 @@ def ensure_kafka_running():
     kafka_start_script_path = '{0}/bin/kafka-server-start.sh'.format(kafka_dir)
     kafka_config_path = '{0}/config/server.properties'.format(kafka_dir)
     coord_log('ensuring kafka is running')
-    run_with_logging('export JMX_PORT={} && export KAFKA_HEAP_OPTS="{}" && {} -daemon {}'
+    run('export JMX_PORT={} && export KAFKA_HEAP_OPTS="{}" && {} -daemon {}'
                      .format(kafka_jmx_port, kafka_heap, kafka_start_script_path, kafka_config_path))
     coord_log('kafka should be running')
 
@@ -223,7 +222,7 @@ def ensure_kafka_running():
 @roles('zk_chosen')
 def create_topic(partitions):
     coord_log('creating topic')
-    run_with_logging('{} --zookeeper localhost:2181 --create --topic 0 --partitions {} --replication-factor 3'
+    run('{} --zookeeper localhost:2181 --create --topic 0 --partitions {} --replication-factor 3'
                      .format(kafka_topic_creation_script_path, partitions))
     coord_log('topic created')
 
