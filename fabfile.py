@@ -223,7 +223,7 @@ def ensure_kafka_running():
 @roles('zk_chosen')
 def create_topic(partitions):
     coord_log('creating topic')
-    run_with_logging('{} --zookeeper localhost:2181 --create --topic 0 --partitions {} --replication-factor 2'
+    run_with_logging('{} --zookeeper localhost:2181 --create --topic 0 --partitions {} --replication-factor 3'
                      .format(kafka_topic_creation_script_path, partitions))
     coord_log('topic created')
 
