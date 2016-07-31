@@ -18,7 +18,7 @@ public class Config {
         m.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "itrac1509.cern.ch:9092,itrac1510.cern.ch:9092,itrac1511.cern.ch:9092");
         m.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
         m.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
-        m.put(ProducerConfig.RETRIES_CONFIG, Long.MAX_VALUE);
+        m.put(ProducerConfig.RETRIES_CONFIG, Integer.MAX_VALUE);
         m.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 268_435_456);
         m.put(ProducerConfig.ACKS_CONFIG, "all");
 
