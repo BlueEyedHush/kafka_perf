@@ -1,7 +1,7 @@
 package cern.accsoft.cals.kafka_perf;
 
 import cern.accsoft.cals.kafka_perf.message_suppliers.MessageSupplier;
-import cern.accsoft.cals.kafka_perf.message_suppliers.MessageSupplierFactory;
+import cern.accsoft.cals.kafka_perf.message_suppliers.MessageSupplierProducer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.errors.TimeoutException;
 import org.slf4j.Logger;
@@ -15,8 +15,8 @@ public class BenchmarkingService implements Runnable {
     private static final long NOT_REPORTED = -1;
     private static final int CONSIDER_PAUSE_EVERY_X_MESSAGES = 100;
 
-    public static BenchmarkingService spawnAndStartBenchmarkingService(String supplierId, long messagesPerSecond) {
-        BenchmarkingService bs = new BenchmarkingService(supplierId, messagesPerSecond);
+    public static BenchmarkingService spawnAndStartBenchmarkingService(MessageSupplierProducer producer, long messagesPerSecond) {
+        BenchmarkingService bs = new BenchmarkingService(producer, messagesPerSecond);
 
         Thread t = new Thread(bs, "benchmarking_thread");
         t.setDaemon(true);
@@ -25,7 +25,7 @@ public class BenchmarkingService implements Runnable {
         return bs;
     }
 
-    private final String supplierId;
+    private final MessageSupplierProducer producer;
     private Semaphore semaphore;
     private MessageSupplier messageSupplier;
     private volatile long messageCount = 0;
@@ -34,8 +34,8 @@ public class BenchmarkingService implements Runnable {
     private volatile long startTimestamp;
     private AtomicLong endTimestamp;
 
-    public BenchmarkingService(String supplierId, long messagesPerSecond) {
-        this.supplierId = supplierId;
+    public BenchmarkingService(MessageSupplierProducer producer, long messagesPerSecond) {
+        this.producer = producer;
         this.throttler = new Throttler(messagesPerSecond);
         semaphore = new Semaphore(1, true);
         semaphore.acquireUninterruptibly();
@@ -47,7 +47,7 @@ public class BenchmarkingService implements Runnable {
      */
     public void startTest(int messageSize, int topicCount, int partitionsPerTopic) {
         /* is this safe */
-        messageSupplier = MessageSupplierFactory.get(supplierId, messageSize, topicCount, partitionsPerTopic);
+        messageSupplier = this.producer.create(messageSize, topicCount, partitionsPerTopic);
         messageCount = 0;
         startTimestamp = System.currentTimeMillis();
         throttler.reset();

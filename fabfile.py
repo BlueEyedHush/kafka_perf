@@ -156,7 +156,11 @@ def restart_benchmark_daemons(threads, sid, throttle_at):
     run('''for pid in `ps aux | grep [k]afka_perf_test | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done''')
     run('mv {} /tmp || true'.format(bench_service_log_path))
     coord_log('starting testing daemons')
-    run_daemonized('java {} -jar {} -t {} -s {} -T {}'.format(jmx_options, test_worker_jar, threads, sid, throttle_at), bench_service_log_path)
+
+    curr_no = env.all_hosts.index(env.host_string)
+    all = len(env.all_hosts)
+    id = '{},{}'.format(curr_no, all)
+    run_daemonized('java {} -jar {} -t {} -s {} -T {} -p {}'.format(jmx_options, test_worker_jar, threads, sid, throttle_at, id), bench_service_log_path)
 
 @task
 @parallel
