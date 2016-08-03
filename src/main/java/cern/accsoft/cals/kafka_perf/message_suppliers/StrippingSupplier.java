@@ -9,7 +9,7 @@ public class StrippingSupplier implements MessageSupplier {
 
     public static int[] getFirstAndIncrement(int id, int all, int thread, int threads_all) {
         int increment = all*threads_all;
-        int first = id + thread*threads_all;
+        int first = id + thread*all;
 
         return new int[]{first, increment};
     }
