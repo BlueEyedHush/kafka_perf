@@ -35,11 +35,21 @@ public class StrippingSupplier implements MessageSupplier {
 
     @Override
     public ProducerRecord<byte[], byte[]> get() {
-        ProducerRecord<byte[], byte[]> record =
-                new ProducerRecord<>(String.valueOf(this.next), generator.nextInt(partitions), null, msg);
-        this.next += this.increment;
-        if(this.next > this.topics) this.next = this.first;
+        int topic, partition, max;
 
-        return record;
+        if(topics > partitions) {
+            topic = this.next;
+            partition = generator.nextInt(partitions);
+            max = topics;
+        } else {
+            topic = generator.nextInt(topics);
+            partition = this.next;
+            max = partitions;
+        }
+
+        this.next += this.increment;
+        if(this.next > max) this.next = this.first;
+
+        return new ProducerRecord<>(String.valueOf(topic), partition, null, msg);
     }
 }

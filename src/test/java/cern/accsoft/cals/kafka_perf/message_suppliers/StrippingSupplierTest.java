@@ -65,8 +65,37 @@ public class StrippingSupplierTest {
         }
 
         int expectedPerTopic = topics/(instances*threads*iteratations);
-        for(int i = 0; i < topics; topics++) {
+        for(int i = 0; i < topics; i++) {
             Assert.assertEquals(expectedPerTopic, messagesInTopic[i]);
+        }
+    }
+
+    @Test
+    public void partitionsShouldBeEquallyUtilized() {
+        int instances = 8;
+        int threads = 4;
+        int partitions = 4096;
+        int iteratations = 128;
+
+        List<MessageSupplier> supplierList = new ArrayList<>(instances*threads);
+        int[] messagesInPartition = new int[partitions];
+
+        for(int i = 0; i < instances; i++) {
+            for(int j = 0; j < threads; j++) {
+                int[] results = StrippingSupplier.getFirstAndIncrement(i, instances, j, threads);
+                supplierList.add(new StrippingSupplier(1, results[0], results[1], 4, partitions));
+            }
+        }
+
+        for(int i = 0; i < iteratations; i++) {
+            supplierList.forEach(s -> {
+                messagesInPartition[s.get().partition()]++;
+            });
+        }
+
+        int expectedPerPartition = partitions/(instances*threads*iteratations);
+        for(int i = 0; i < partitions; i++) {
+            Assert.assertEquals(expectedPerPartition, messagesInPartition[i]);
         }
     }
 }
