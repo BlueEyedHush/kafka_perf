@@ -43,10 +43,10 @@ public class StrippingSupplierTest {
 
     @Test
     public void topicsShouldBeEquallyUtilized() {
-        int instances = 4;
+        int instances = 8;
         int threads = 4;
-        int topics = 64;
-        int iteratations = 4;
+        int topics = 4096;
+        int iteratations = 128;
 
         List<MessageSupplier> supplierList = new ArrayList<>(instances*threads);
         int[] messagesInTopic = new int[topics];

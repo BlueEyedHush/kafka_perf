@@ -132,12 +132,15 @@ def h(name):
 def run_daemonized(cmd, log_path):
     run('nohup {0} > {1} 2>&1 < /dev/null &'.format(cmd, log_path))
 
+def ignore_err(cmd):
+    return '{} || true'.format(cmd)
+
 @task
 @roles('all')
 def init():
-    run('mkdir -p {0}'.format(remote_log_directory))
+    run(ignore_err('mkdir -p {}'.format(remote_log_directory)))
     run('echo ---------`date`--------- > {}'.format(coordinator_log_path))
-    local('mkdir -p {}'.format(local_log_directory))
+    local(ignore_err('mkdir -p {}'.format(local_log_directory)))
     coord_log('log directory created')
 
 @task
@@ -154,7 +157,7 @@ def stop_kafka():
 def restart_benchmark_daemons(threads, sid, throttle_at):
     coord_log('stopping testing daemons')
     run('''for pid in `ps aux | grep [k]afka_perf_test | awk '{print $2}' | tr '\n' ' '`; do kill -s 9 $pid; done''')
-    run('mv {} /tmp || true'.format(bench_service_log_path))
+    run(ignore_err('mv {} /tmp'.format(bench_service_log_path)))
     coord_log('starting testing daemons')
 
     curr_no = env.all_hosts.index(env.host_string)
@@ -195,21 +198,21 @@ def foreach_mount_point(cmd):
 @roles('kafka')
 def cleanup_after_kafka():
     coord_log('emptying kafka log directories')
-    foreach_mount_point('rm -rf')
-    foreach_mount_point('mkdir -p')
+    foreach_mount_point(ignore_err('rm -rf'))
+    foreach_mount_point(ignore_err('mkdir -p'))
     coord_log('kafka log directories emptied')
 
 @task
 @parallel
 @roles('kafka')
 def remove_kafka_log():
-    run('rm -f {}'.format(kafka_log_file))
+    run(ignore_err('rm -f {}'.format(kafka_log_file)))
 
 @task
 @parallel
 @roles('prod')
 def remove_result_files():
-    run('rm -rf {}'.format(results_file_path))
+    run(ignore_err('rm -rf {}'.format(results_file_path)))
 
 @task
 @parallel
