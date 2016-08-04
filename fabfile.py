@@ -186,7 +186,7 @@ def purge_zookeeper():
     coord_log('purging complete')
 
 def foreach_mount_point(cmd):
-    run('for num in $(seq {} {}); do {} {}${{num}}{}; done'.format(
+    run('for num in $(seq {} {}); do {} {}${{num}}{} || true; done'.format(
             kafka_d_first_mount_number,
             kafka_d_last_mount_number,
             cmd,
@@ -198,8 +198,8 @@ def foreach_mount_point(cmd):
 @roles('kafka')
 def cleanup_after_kafka():
     coord_log('emptying kafka log directories')
-    foreach_mount_point(ignore_err('rm -rf'))
-    foreach_mount_point(ignore_err('mkdir -p'))
+    foreach_mount_point('rm -rf')
+    foreach_mount_point('mkdir -p')
     coord_log('kafka log directories emptied')
 
 @task
