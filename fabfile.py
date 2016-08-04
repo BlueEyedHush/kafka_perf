@@ -191,7 +191,7 @@ def foreach_mount_point(cmd):
             kafka_d_last_mount_number,
             cmd,
             kafka_d_mount_point_prefix,
-            kafka_data_dir_suffix))
+            kafka_data_dir_suffix), timeout=40)
 
 @task
 @parallel
