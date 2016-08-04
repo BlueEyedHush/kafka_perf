@@ -53,11 +53,6 @@ kafka_dir = '{}/kafka/latest'.format(bundle_dir)
 kafka_topic_creation_script_path = '{}/bin/kafka-topics.sh'.format(kafka_dir)
 zookeeper_dir = '{}/zookeeper/latest'.format(bundle_dir)
 
-kafka_d_mount_point_prefix = '/data'
-kafka_d_first_mount_number = 1
-kafka_d_last_mount_number = 8
-kafka_data_dir_suffix = '/cals/kafka_perf/data/kf'
-
 kafka_log_file = '{}/logs/kafkaServer.out'.format(kafka_dir)
 
 # paths on remote machines (openstack)
@@ -90,6 +85,15 @@ env.roledefs = {
     'prod': [a['o1'], a['o2'], a['o3'], a['o4'], a['o5'], a['o6'], a['o7'], a['o8']],
     'zk_operator': [a['o8']], # node from which all commands to zk will be issued
     'zk_chosen': [a['i11']]
+}
+
+kafka_d_mount_point_prefix = '/data'
+kafka_data_dir_suffix = '/cals/kafka_perf/data/kf'
+
+kf_mount_points = {
+    a['i9'] : '1 2 3 4 5 6 8',
+    a['i10'] : '1 2 3 4 5 6 7 8',
+    a['i11'] : '1 2 3 4 5 6 8',
 }
 
 def coord_log(msg):
@@ -186,9 +190,8 @@ def purge_zookeeper():
     coord_log('purging complete')
 
 def foreach_mount_point(cmd):
-    run('for num in $(seq {} {}); do {} {}${{num}}{} || true; done'.format(
-            kafka_d_first_mount_number,
-            kafka_d_last_mount_number,
+    run('for num in {}; do {} {}${{num}}{}; done'.format(
+            kf_mount_points[env.host_string],
             cmd,
             kafka_d_mount_point_prefix,
             kafka_data_dir_suffix), timeout=40)
